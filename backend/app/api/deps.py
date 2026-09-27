@@ -37,3 +37,23 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def get_optional_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User | None:
+    if not token:
+        return None
+    payload = decode_access_token(token)
+    if not payload:
+        return None
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        return None
+    try:
+        user_id = int(user_id_str)
+        return db.query(User).filter(User.id == user_id).first()
+    except Exception:
+        return None
+

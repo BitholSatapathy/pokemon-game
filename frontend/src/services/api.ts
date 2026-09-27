@@ -938,3 +938,141 @@ export const searchPlayers = async (
   if (!res.ok) return [];
   return res.json();
 };
+
+
+// ============================================================
+// PHASE 13 — Leaderboards & Social
+// ============================================================
+
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: number;
+  username: string;
+  avatar_url?: string;
+  value: number;
+  badge?: string;
+  level: number;
+}
+
+export interface MyRanks {
+  richest_rank?: number;
+  richest_value: number;
+  collectors_rank?: number;
+  collectors_value: number;
+  traders_rank?: number;
+  traders_value: number;
+  level_rank?: number;
+  level_value: number;
+}
+
+export interface SocialUserBasic {
+  id: number;
+  username: string;
+  avatar_url?: string;
+  level: number;
+}
+
+export interface FollowCounts {
+  user_id: number;
+  followers_count: number;
+  following_count: number;
+  is_following: boolean;
+}
+
+export interface ShowcaseCard {
+  id: number;
+  card_id: string;
+  name: string;
+  image_url?: string;
+  rarity: string;
+  is_foil: boolean;
+  quantity: number;
+}
+
+export interface PublicProfile {
+  id: number;
+  username: string;
+  avatar_url?: string;
+  level: number;
+  xp: number;
+  created_at: string;
+  coins: number;
+  total_cards: number;
+  unique_cards: number;
+  completed_trades: number;
+  followers_count: number;
+  following_count: number;
+  is_following: boolean;
+  top_cards: ShowcaseCard[];
+}
+
+export const fetchLeaderboard = async (
+  category: 'richest' | 'collectors' | 'traders' | 'level'
+): Promise<LeaderboardEntry[]> => {
+  const res = await fetch(`${API_BASE}/leaderboard/${category}`);
+  if (!res.ok) throw new Error(`Failed to fetch ${category} leaderboard`);
+  return res.json();
+};
+
+export const fetchMyRanks = async (token: string): Promise<MyRanks> => {
+  const res = await fetch(`${API_BASE}/leaderboard/me/rank`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch personal ranks');
+  return res.json();
+};
+
+export const followUser = async (token: string, userId: number): Promise<any> => {
+  const res = await fetch(`${API_BASE}/social/follow/${userId}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to follow user');
+  }
+  return res.json();
+};
+
+export const unfollowUser = async (token: string, userId: number): Promise<any> => {
+  const res = await fetch(`${API_BASE}/social/follow/${userId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to unfollow user');
+  }
+  return res.json();
+};
+
+export const fetchFollowers = async (userId: number): Promise<SocialUserBasic[]> => {
+  const res = await fetch(`${API_BASE}/social/followers/${userId}`);
+  if (!res.ok) return [];
+  return res.json();
+};
+
+export const fetchFollowing = async (userId: number): Promise<SocialUserBasic[]> => {
+  const res = await fetch(`${API_BASE}/social/following/${userId}`);
+  if (!res.ok) return [];
+  return res.json();
+};
+
+export const fetchFollowCounts = async (userId: number, token?: string): Promise<FollowCounts> => {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/social/counts/${userId}`, { headers });
+  if (!res.ok) throw new Error('Failed to fetch follow counts');
+  return res.json();
+};
+
+export const fetchPublicProfile = async (username: string, token?: string): Promise<PublicProfile> => {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/social/profile/${encodeURIComponent(username)}`, { headers });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch public profile');
+  }
+  return res.json();
+};

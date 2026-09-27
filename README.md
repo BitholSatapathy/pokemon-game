@@ -109,6 +109,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 10**: Marketplace & Player Trading Desk (Player card listings, secure card escrow engine, 5% protocol transaction fee, live order book, search & multi-filter, atomic buy/sell settlement, cancellation vault refund, sales & trade ledger audit)
 - ✅ **Phase 11**: Events & Rotating Dynamic Content (7-day daily login streak calendar, live seasonal events with 2x XP and holo foil buffs, rotating daily flash deal vault, dedicated Events Hub)
 - ✅ **Phase 12**: Trading System & Direct Peer-to-Peer Offers (Player search, 4-step create wizard, offer/request cards, atomic card swap on accept, 48h expiry, decline & cancel flows, Trading Hub with incoming/sent tabs)
-- ⏳ **Phase 13**: Coming Soon
+- ✅ **Phase 13**: Leaderboards & Social Rankings (Global Hall of Fame rankings for Richest, Master Collectors, Grand Traders, Level & Prestige, Top 3 podiums, personal rank tracker, public profile with showcase vault, and player follow/unfollow system)
+- ⏳ **Phase 14**: Coming Soon
 
 

@@ -473,5 +473,177 @@ export const fetchMyProgression = async (token: string): Promise<ApiPlayerProgre
   }
 };
 
+export interface ApiMarketListing {
+  id: number;
+  seller_id: number;
+  seller_name: string;
+  card_id: string;
+  is_foil: boolean;
+  quantity: number;
+  price_coins: number;
+  status: 'ACTIVE' | 'SOLD' | 'CANCELLED';
+  buyer_id?: number | null;
+  buyer_name?: string | null;
+  created_at: string;
+  sold_at?: string | null;
+  card: ApiCard;
+}
+
+export interface ApiMarketplaceListings {
+  items: ApiMarketListing[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ApiMarketplaceStats {
+  active_listings_count: number;
+  total_volume_24h: number;
+  top_traded_card?: string | null;
+  fee_percentage: number;
+}
+
+export interface CreateListingPayload {
+  card_id: string;
+  price_coins: number;
+  is_foil?: boolean;
+  quantity?: number;
+}
+
+export interface BuyListingResult {
+  success: boolean;
+  message: string;
+  listing_id: number;
+  card_name: string;
+  price_coins: number;
+  new_coin_balance: number;
+}
+
+export interface CancelListingResult {
+  success: boolean;
+  message: string;
+  listing_id: number;
+  card_name: string;
+}
+
+export const fetchMarketListings = async (params: {
+  search?: string;
+  rarity?: string;
+  set_id?: string;
+  is_foil?: boolean;
+  min_price?: number;
+  max_price?: number;
+  sort_by?: 'newest' | 'price_asc' | 'price_desc';
+  page?: number;
+  limit?: number;
+}): Promise<ApiMarketplaceListings> => {
+  try {
+    const q = new URLSearchParams();
+    if (params.search) q.append('search', params.search);
+    if (params.rarity) q.append('rarity', params.rarity);
+    if (params.set_id) q.append('set_id', params.set_id);
+    if (params.is_foil !== undefined) q.append('is_foil', String(params.is_foil));
+    if (params.min_price !== undefined) q.append('min_price', String(params.min_price));
+    if (params.max_price !== undefined) q.append('max_price', String(params.max_price));
+    if (params.sort_by) q.append('sort_by', params.sort_by);
+    if (params.page) q.append('page', String(params.page));
+    if (params.limit) q.append('limit', String(params.limit));
+
+    const res = await fetch(`${API_BASE}/market/listings?${q.toString()}`);
+    if (!res.ok) throw new Error('Failed to fetch market listings');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching market listings:', err);
+    return { items: [], total: 0, page: 1, limit: 20 };
+  }
+};
+
+export const fetchMyMarketListings = async (token: string): Promise<ApiMarketListing[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/market/my-listings`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch user listings');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching my listings:', err);
+    return [];
+  }
+};
+
+export const createMarketListing = async (
+  payload: CreateListingPayload,
+  token: string
+): Promise<ApiMarketListing> => {
+  const res = await fetch(`${API_BASE}/market/listings`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to list card for sale.');
+  }
+  return data;
+};
+
+export const buyMarketListing = async (
+  listingId: number,
+  token: string
+): Promise<BuyListingResult> => {
+  const res = await fetch(`${API_BASE}/market/listings/${listingId}/buy`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to purchase listing.');
+  }
+  return data;
+};
+
+export const cancelMarketListing = async (
+  listingId: number,
+  token: string
+): Promise<CancelListingResult> => {
+  const res = await fetch(`${API_BASE}/market/listings/${listingId}/cancel`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to cancel listing.');
+  }
+  return data;
+};
+
+export const fetchMarketStats = async (): Promise<ApiMarketplaceStats | null> => {
+  try {
+    const res = await fetch(`${API_BASE}/market/stats`);
+    if (!res.ok) throw new Error('Failed to fetch market stats');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching market stats:', err);
+    return null;
+  }
+};
+
+
 
 

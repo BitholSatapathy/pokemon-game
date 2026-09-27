@@ -6,8 +6,9 @@ from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.api.api_router import api_router
 from app.api.v1 import health
-from app.models import User, Series, CardSet, Card, Pack, PlayerPack, Transaction, UserCard, Mission, UserMission
+from app.models import User, Series, CardSet, Card, Pack, PlayerPack, Transaction, UserCard, Mission, UserMission, MarketListing
 from app.services.missions_service import ensure_default_missions
+
 
 def seed_default_packs():
     """Seed initial shop booster packs if table is empty."""

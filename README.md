@@ -105,7 +105,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 6**: Collection / Binder (Master binder view, 9-pocket sheet simulation, advanced search, sorting, elemental type filters, card flip inspect modal)
 - ✅ **Phase 7**: Inventory & Asset Management (Real-time unopened pack vault, card inventory, active status sync)
 - ✅ **Phase 8**: Economy & Card Selling Engine (Individual card selling, 1-click automated duplicate liquidation at 70% rate preserving 1x master binder copies, immutable financial audit ledger)
-- ✅ **Phase 9**: Missions / Daily Quests & Level Progression (Daily directives, weekly bounties, lifetime achievements, dynamic transaction sync, claimable rewards, level-up milestones)
-- ⏳ **Phase 10**: Marketplace (Player card listings, search & filter by card, buy & sell with transaction fee)
+- ✅ **Phase 10**: Marketplace & Player Trading Desk (Player card listings, secure card escrow engine, 5% protocol transaction fee, live order book, search & multi-filter, atomic buy/sell settlement, cancellation vault refund, sales & trade ledger audit)
+- ⏳ **Phase 11**: Events & Rotating Dynamic Content
 
 

@@ -99,6 +99,6 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 0**: Project Foundation (React + Vite + Tailwind + FastAPI + Health Check)
 - ✅ **Phase 1**: UI & Design System (Dark gaming aesthetic, reusable components, interactive routing)
 - ✅ **Phase 2**: Authentication & Player Account (Registration, JWT, Starting Coins: 10,000, Level 1)
-- ⏳ **Phase 3**: Card & Set Database (TCGdex integration, single set ingestion)
+- ✅ **Phase 3**: Card & Set Database (TCGdex integration, 102 Base Set cards ingested)
 - ⏳ **Phase 4**: Shop System (Buy Booster Packs)
 - ⏳ **Phase 5**: Pack Opening Engine (Server-side RNG, 3D/flip card reveal)

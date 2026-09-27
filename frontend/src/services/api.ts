@@ -645,5 +645,165 @@ export const fetchMarketStats = async (): Promise<ApiMarketplaceStats | null> =>
 };
 
 
+// ==========================================
+// PHASE 11: EVENTS & DAILY SYSTEMS
+// ==========================================
 
+export interface ApiDailyStreakRewardItem {
+  day: number;
+  title: string;
+  reward_coins: number;
+  reward_gems: number;
+  reward_xp: number;
+  pack_id?: string | null;
+  pack_name?: string | null;
+  is_claimed: boolean;
+  is_today: boolean;
+  is_locked: boolean;
+}
 
+export interface ApiDailyStreakStatus {
+  current_streak: number;
+  longest_streak: number;
+  total_claims: number;
+  can_claim_today: boolean;
+  last_claim_date?: string | null;
+  seconds_to_reset: number;
+  calendar: ApiDailyStreakRewardItem[];
+}
+
+export interface ApiClaimStreakResult {
+  success: boolean;
+  message: string;
+  day_claimed: number;
+  reward_coins: number;
+  reward_gems: number;
+  reward_xp: number;
+  pack_awarded?: string | null;
+  new_coin_balance: number;
+  new_gem_balance: number;
+  new_level: number;
+  new_xp: number;
+  new_streak: number;
+}
+
+export interface ApiGameEvent {
+  id: string;
+  name: string;
+  subtitle?: string | null;
+  description: string;
+  banner_image: string;
+  badge_text: string;
+  event_type: string;
+  buff_xp_multiplier: number;
+  buff_foil_rate_boost: number;
+  buff_shop_discount_pct: number;
+  start_date: string;
+  end_date: string;
+  seconds_remaining: number;
+  is_active: boolean;
+  bounties: {
+    id: string;
+    title: string;
+    description: string;
+    target: number;
+    reward_coins: number;
+    reward_gems: number;
+    icon?: string;
+  }[];
+}
+
+export interface ApiFlashDeal {
+  id: number;
+  deal_date: string;
+  title: string;
+  description: string;
+  pack_id: string;
+  pack_name: string;
+  pack_image: string;
+  original_price: number;
+  discount_price: number;
+  discount_pct: number;
+  bonus_coins: number;
+  can_purchase: boolean;
+  has_purchased: boolean;
+  seconds_to_reset: number;
+}
+
+export interface ApiPurchaseFlashDealResult {
+  success: boolean;
+  message: string;
+  pack_name: string;
+  price_paid: number;
+  new_coin_balance: number;
+}
+
+export const fetchDailyStreak = async (token: string): Promise<ApiDailyStreakStatus | null> => {
+  try {
+    const res = await fetch(`${API_BASE}/events/streak`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch streak status');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching daily streak:', err);
+    return null;
+  }
+};
+
+export const claimDailyStreak = async (token: string): Promise<ApiClaimStreakResult> => {
+  const res = await fetch(`${API_BASE}/events/streak/claim`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to claim daily check-in reward.');
+  }
+  return data;
+};
+
+export const fetchActiveEvents = async (): Promise<ApiGameEvent[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/events/active`);
+    if (!res.ok) throw new Error('Failed to fetch active events');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching active events:', err);
+    return [];
+  }
+};
+
+export const fetchDailyFlashDeal = async (token?: string): Promise<ApiFlashDeal | null> => {
+  try {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/events/flash-deal`, { headers });
+    if (!res.ok) throw new Error('Failed to fetch flash deal');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching daily flash deal:', err);
+    return null;
+  }
+};
+
+export const purchaseDailyFlashDeal = async (token: string): Promise<ApiPurchaseFlashDealResult> => {
+  const res = await fetch(`${API_BASE}/events/flash-deal/purchase`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to purchase flash deal.');
+  }
+  return data;
+};

@@ -214,14 +214,22 @@ def open_booster_pack(
         else:
             pulled_uncommons = random.choices(uncommons, k=3)
         
-        # Slot 9 has 15% chance to be reverse holographic foil!
+        # Check active event buffs
+        from app.models.event import GameEvent
+        active_event = db.query(GameEvent).filter(GameEvent.is_active == True, GameEvent.end_date > datetime.utcnow()).first()
+        xp_mult = active_event.buff_xp_multiplier if active_event else 1.0
+        foil_boost = active_event.buff_foil_rate_boost if active_event else 0.0
+
+        # Slot 9 has 15% (+ event foil boost) chance to be reverse holographic foil!
+        reverse_foil_rate = min(0.8, 0.15 + foil_boost)
         for i, c in enumerate(pulled_uncommons):
-            slot_is_foil = (i == 2 and random.random() < 0.15)
+            slot_is_foil = (i == 2 and random.random() < reverse_foil_rate)
             pulled_selections.append({"card": c, "is_foil": slot_is_foil})
 
-        # Slot 10: High-Tier Rare Slot (35% Rare Holo, 65% Regular Rare)
+        # Slot 10: High-Tier Rare Slot (35% + event foil boost for Rare Holo, remainder Regular Rare)
+        holo_rate = min(0.9, 0.35 + foil_boost)
         roll = random.random()
-        if roll < 0.35 and holo_rares:
+        if roll < holo_rate and holo_rares:
             selected_rare = random.choice(holo_rares)
             rare_foil = True
         else:
@@ -281,8 +289,8 @@ def open_booster_pack(
                 )
             )
 
-        # 6. Award Progression & XP (+50 XP per pack opened)
-        xp_earned = 50
+        # 6. Award Progression & XP (+50 XP * event multiplier per pack opened)
+        xp_earned = int(50 * xp_mult)
         current_user.xp += xp_earned
         
         # Level up threshold: 200 * current_level

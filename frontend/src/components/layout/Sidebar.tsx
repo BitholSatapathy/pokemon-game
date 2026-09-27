@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
   Home,
   ShoppingBag,
@@ -29,6 +29,7 @@ export const Sidebar: React.FC = () => {
     { to: '/inventory', label: 'Inventory', icon: <Boxes className="w-4 h-4" /> },
     { to: '/market', label: 'Market', icon: <Store className="w-4 h-4" /> },
     { to: '/missions', label: 'Missions', icon: <Target className="w-4 h-4" /> },
+    { to: '/events', label: 'Events & Daily', icon: <Flame className="w-4 h-4 text-amber-400" /> },
     { to: '/profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
   ];
 
@@ -90,14 +91,15 @@ export const Sidebar: React.FC = () => {
           <h4 className="text-sm font-extrabold text-white font-display leading-tight">
             CELESTIAL HORIZONS
           </h4>
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full text-xs py-1.5 border-purple-500/50 hover:bg-brand-violet hover:border-purple-400 text-purple-200"
-            onClick={() => setEventModalOpen(true)}
-          >
-            VIEW EVENT
-          </Button>
+          <Link to="/events" onClick={() => setMobileOpen(false)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full text-xs py-1.5 border-purple-500/50 hover:bg-brand-violet hover:border-purple-400 text-purple-200"
+            >
+              VIEW EVENT
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

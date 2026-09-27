@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   PackageOpen,
   ShoppingBag,
   ChevronLeft,
   ChevronRight,
+  Gift,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -14,6 +16,8 @@ import { MarketTrendsWidget } from '../components/widgets/MarketTrendsWidget';
 import { UserProfile, Card } from '../types';
 import { MOCK_PACKS, MOCK_CARDS } from '../data/mockData';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { fetchDailyStreak } from '../services/api';
 
 interface DashboardProps {
   user: UserProfile;
@@ -24,6 +28,23 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
   const [recentPulls, setRecentPulls] = useState<Card[]>(MOCK_CARDS.slice(0, 5));
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { token } = useAuth();
+  const [canClaimToday, setCanClaimToday] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
+
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    fetchDailyStreak(token).then((data) => {
+      if (isMounted && data) {
+        setCanClaimToday(data.can_claim_today);
+        setCurrentStreak(data.current_streak);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   const handleKeepCard = (card: Card) => {
     showToast(`${card.name} kept in your master collection binder!`, 'success', 'Card Secured');
@@ -47,6 +68,43 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-16">
       {/* LEFT / CENTER COLUMN: Main Dashboard Content (8 cols on XL) */}
       <div className="xl:col-span-8 space-y-6">
+        {/* Daily Streak & Live Event Banner */}
+        <div className="glass-panel p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-surface-card to-purple-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+              <Gift className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white font-display">
+                  {canClaimToday
+                    ? '🎁 Daily Login Reward Ready!'
+                    : `🔥 ${currentStreak}-Day Streak Active`}
+                </span>
+                <span className="text-[10px] bg-purple-500/20 text-purple-300 font-bold px-2 py-0.5 rounded-full border border-purple-500/40">
+                  ⚡ 2x XP Surge Live
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {canClaimToday
+                  ? 'Check in now to claim today’s free coins & progress your 7-day streak calendar.'
+                  : 'You have collected today’s check-in bonus! The daily reset occurs at 00:00 UTC.'}
+              </p>
+            </div>
+          </div>
+
+          <Link to="/events" className="shrink-0">
+            <Button
+              size="sm"
+              variant={canClaimToday ? 'gold' : 'outline'}
+              className="text-xs w-full sm:w-auto"
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+            >
+              {canClaimToday ? 'Claim Daily Bonus' : 'View Events Hub'}
+            </Button>
+          </Link>
+        </div>
+
         {/* HERO BANNER: "OPEN YOUR NEXT PACK" (Matches Concept Screenshot Top Hero) */}
         <div className="relative rounded-3xl overflow-hidden border border-[#2A2A48] bg-gradient-to-r from-[#121224] via-[#15152C] to-[#0D1022] shadow-2xl">
           {/* Background Fantasy Vista */}

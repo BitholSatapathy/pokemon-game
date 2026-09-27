@@ -14,6 +14,7 @@ import { InventoryPage } from './pages/InventoryPage';
 import { MarketPage } from './pages/MarketPage';
 import { MissionsPage } from './pages/MissionsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { EventsPage } from './pages/EventsPage';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
@@ -61,6 +62,7 @@ const MainLayout: React.FC = () => {
             <Route path="/inventory" element={<InventoryPage user={activeUser} setUser={handleSetUser} />} />
             <Route path="/market" element={<MarketPage user={activeUser} setUser={handleSetUser} />} />
             <Route path="/missions" element={<MissionsPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/events" element={<EventsPage user={activeUser} setUser={handleSetUser} />} />
             <Route path="/profile" element={<ProfilePage user={activeUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

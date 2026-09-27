@@ -3,7 +3,7 @@ import { CardRarity } from '../../types';
 import { Sparkles } from 'lucide-react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  rarity?: CardRarity;
+  rarity?: CardRarity | string;
   variant?: 'default' | 'gold' | 'purple' | 'success';
 }
 
@@ -27,13 +27,15 @@ export const Badge: React.FC<BadgeProps> = ({
       case 'Rare':
         badgeStyle = 'bg-blue-950/80 text-blue-300 border-blue-500/40';
         break;
+      case 'Rare Holo':
       case 'Ultra Rare':
-        badgeStyle = 'bg-purple-950/90 text-purple-300 border-purple-500/60 shadow-glow-purple';
+        badgeStyle = 'bg-purple-950/90 text-purple-200 border-purple-400/80 shadow-glow-purple font-semibold';
         break;
       case 'Secret Rare':
         badgeStyle = 'bg-amber-950/90 text-amber-200 border-amber-400/80 shadow-glow-gold font-bold';
         break;
     }
+
   } else if (variant === 'gold') {
     badgeStyle = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
   } else if (variant === 'purple') {

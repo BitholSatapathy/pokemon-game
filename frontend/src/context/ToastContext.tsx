@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckCircle2, AlertCircle, Info, Sparkles, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info' | 'gold';
+export type ToastType = 'success' | 'error' | 'info' | 'gold' | 'purple';
 
 export interface ToastItem {
   id: string;
@@ -40,6 +40,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />;
       case 'gold':
         return <Sparkles className="w-5 h-5 text-brand-gold shrink-0 animate-bounce" />;
+      case 'purple':
+        return <Sparkles className="w-5 h-5 text-brand-purple shrink-0 animate-pulse" />;
       case 'info':
       default:
         return <Info className="w-5 h-5 text-brand-purple shrink-0" />;
@@ -54,11 +56,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return 'border-rose-500/40 shadow-rose-500/10';
       case 'gold':
         return 'border-brand-gold/60 shadow-glow-gold';
+      case 'purple':
+        return 'border-brand-purple/70 shadow-glow-purple';
       case 'info':
       default:
         return 'border-brand-purple/40 shadow-glow-purple';
     }
   };
+
 
   return (
     <ToastContext.Provider value={{ showToast, removeToast }}>

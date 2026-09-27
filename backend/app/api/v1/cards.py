@@ -1,11 +1,21 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
 from app.core.database import get_db
+from app.models.user import User
 from app.models.card import Series, CardSet, Card
-from app.schemas.card import CardResponse, CardListResponse, SetResponse, SeriesResponse
+from app.models.user_card import UserCard
+from app.schemas.card import (
+    CardResponse,
+    CardListResponse,
+    SetResponse,
+    SeriesResponse,
+    UserCardResponse,
+    UserCollectionResponse,
+)
+from app.api.deps import get_current_user
 
 router = APIRouter(tags=["Cards & Sets"])
 
@@ -25,6 +35,34 @@ def get_set_by_id(set_id: str, db: Session = Depends(get_db)):
             detail=f"Set with id '{set_id}' not found."
         )
     return card_set
+
+@router.get("/collection/me", response_model=UserCollectionResponse)
+@router.get("/cards/collection/me", response_model=UserCollectionResponse)
+def get_my_collection(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieve all cards owned by the authenticated player."""
+    user_cards = (
+        db.query(UserCard)
+        .options(joinedload(UserCard.card))
+        .filter(UserCard.user_id == current_user.id)
+        .order_by(UserCard.obtained_at.desc())
+        .all()
+    )
+
+    total_cards = sum(uc.quantity for uc in user_cards)
+    unique_cards = len({uc.card_id for uc in user_cards})
+    total_set_cards = db.query(Card).count()
+    completion_percentage = round((unique_cards / total_set_cards * 100), 1) if total_set_cards > 0 else 0.0
+
+    return UserCollectionResponse(
+        total_cards=total_cards,
+        unique_cards=unique_cards,
+        total_set_cards=total_set_cards,
+        completion_percentage=completion_percentage,
+        items=[UserCardResponse.model_validate(uc) for uc in user_cards]
+    )
 
 @router.get("/cards", response_model=CardListResponse)
 def get_cards(
@@ -53,7 +91,6 @@ def get_cards(
             )
         )
 
-    # Sort numerically by card number if possible
     total = query.count()
     cards = query.offset(skip).limit(limit).all()
 
@@ -72,3 +109,4 @@ def get_card_by_id(card_id: str, db: Session = Depends(get_db)):
             detail=f"Card with id '{card_id}' not found."
         )
     return CardResponse.model_validate(card)
+

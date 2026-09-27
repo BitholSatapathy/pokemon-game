@@ -44,3 +44,33 @@ class TransactionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PulledCardResponse(BaseModel):
+    id: str
+    name: str
+    set_id: str
+    number: str
+    rarity: str
+    types: Optional[str] = None
+    hp: Optional[int] = None
+    image_url: str
+    market_price: int
+    flavor_text: Optional[str] = None
+    artist: Optional[str] = None
+    is_foil: bool = False
+    is_new: bool = False
+    total_owned: int = 1
+
+    class Config:
+        from_attributes = True
+
+class PackOpenResponse(BaseModel):
+    success: bool
+    message: str
+    pack_id: str
+    pack_name: str
+    cards: list[PulledCardResponse]
+    remaining_packs: int
+    xp_earned: int
+    player_stats: dict
+

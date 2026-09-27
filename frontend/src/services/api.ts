@@ -186,3 +186,86 @@ export const fetchPlayerPacks = async (token: string): Promise<ApiPlayerPack[]> 
     return [];
   }
 };
+
+export interface ApiPulledCard {
+  id: string;
+  name: string;
+  set_id: string;
+  number: string;
+  rarity: string;
+  types?: string;
+  hp?: number;
+  image_url: string;
+  market_price: number;
+  flavor_text?: string;
+  artist?: string;
+  is_foil: boolean;
+  is_new: boolean;
+  total_owned: number;
+}
+
+export interface PackOpenResult {
+  success: boolean;
+  message: string;
+  pack_id: string;
+  pack_name: string;
+  cards: ApiPulledCard[];
+  remaining_packs: number;
+  xp_earned: number;
+  player_stats: {
+    coins: number;
+    gems: number;
+    level: number;
+    xp: number;
+  };
+}
+
+export const openBoosterPack = async (packId: string, token: string): Promise<PackOpenResult> => {
+  const res = await fetch(`${API_BASE}/packs/${packId}/open`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to open booster pack.');
+  }
+  return data;
+};
+
+export interface ApiUserCard {
+  id: number;
+  card_id: string;
+  quantity: number;
+  is_foil: boolean;
+  obtained_at: string;
+  card: ApiCard;
+}
+
+export interface ApiUserCollection {
+  total_cards: number;
+  unique_cards: number;
+  total_set_cards: number;
+  completion_percentage: number;
+  items: ApiUserCard[];
+}
+
+export const fetchMyCollection = async (token: string): Promise<ApiUserCollection | null> => {
+  try {
+    const res = await fetch(`${API_BASE}/cards/collection/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch user collection');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching collection:', err);
+    return null;
+  }
+};
+

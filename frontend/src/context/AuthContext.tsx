@@ -11,6 +11,8 @@ interface AuthContextType {
   register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
+  refreshUser: () => Promise<void>;
+  updateStats: (stats: Partial<UserProfile>) => void;
   openAuthModal: (initialTab?: 'login' | 'register') => void;
   closeAuthModal: () => void;
   isAuthModalOpen: boolean;
@@ -20,6 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE = 'http://localhost:8000/api/v1';
+
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -193,6 +196,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = useCallback(async () => {
+    const storedToken = localStorage.getItem('tcg_auth_token');
+    if (!storedToken) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser((prev) => ({
+          id: String(data.id),
+          username: data.username,
+          email: data.email,
+          coins: data.coins,
+          gems: data.gems,
+          level: data.level,
+          xp: data.xp,
+          xpToNextLevel: 500 * data.level,
+          packsOpened: prev?.packsOpened ?? 0,
+          totalCards: prev?.totalCards ?? 0,
+          maxCards: 240,
+          binderCompletionRate: prev?.binderCompletionRate ?? 0,
+          avatarUrl: data.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+        }));
+      }
+    } catch {
+      // Ignore network errors on background refresh
+    }
+  }, []);
+
+  const updateStats = useCallback((stats: Partial<UserProfile>) => {
+    setUser((prev) => (prev ? { ...prev, ...stats } : null));
+  }, []);
+
   const logout = () => {
     localStorage.removeItem('tcg_auth_token');
     setToken(null);
@@ -211,6 +253,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         setUser,
+        refreshUser,
+        updateStats,
         openAuthModal,
         closeAuthModal,
         isAuthModalOpen,

@@ -14,11 +14,14 @@ import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Card, CardRarity } from '../types';
 import { MOCK_CARDS } from '../data/mockData';
-import { fetchCards } from '../services/api';
+import { fetchCards, fetchMyCollection } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 export const CollectionPage: React.FC = () => {
+  const { token } = useAuth();
   const [cards, setCards] = useState<Card[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isFromDb, setIsFromDb] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +35,7 @@ export const CollectionPage: React.FC = () => {
     'Common',
     'Uncommon',
     'Rare',
+    'Rare Holo',
     'Holo Rare',
     'Ultra Rare',
     'Secret Rare',
@@ -41,17 +45,36 @@ export const CollectionPage: React.FC = () => {
     let isMounted = true;
     const loadCards = async () => {
       setIsLoading(true);
-      const res = await fetchCards({ set_id: 'base1', limit: 110 });
-      if (isMounted) {
-        if (res.items.length > 0) {
-          setCards(res.items);
-          setIsFromDb(true);
-        } else {
-          // Fallback to local cards if backend not yet seeded
-          setCards(MOCK_CARDS);
-          setIsFromDb(false);
+      try {
+        const [cardsRes, collRes] = await Promise.all([
+          fetchCards({ set_id: 'base1', limit: 110 }),
+          token ? fetchMyCollection(token) : Promise.resolve(null),
+        ]);
+
+        const ownedMap = new Map<string, number>();
+        if (collRes && collRes.items) {
+          collRes.items.forEach((item) => {
+            ownedMap.set(item.card_id, (ownedMap.get(item.card_id) || 0) + item.quantity);
+          });
         }
-        setIsLoading(false);
+
+        if (isMounted) {
+          if (cardsRes.items.length > 0) {
+            const mapped = cardsRes.items.map((c) => ({
+              ...c,
+              ownedQuantity: token ? (ownedMap.get(c.id) || 0) : c.ownedQuantity,
+            }));
+            setCards(mapped);
+            setIsFromDb(true);
+          } else {
+            setCards(MOCK_CARDS);
+            setIsFromDb(false);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading collection:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -59,7 +82,8 @@ export const CollectionPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [token]);
+
 
   const filteredCards = useMemo(() => {
     return cards.filter((card) => {

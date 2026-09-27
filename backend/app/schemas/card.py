@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -41,3 +42,22 @@ class SeriesResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserCardResponse(BaseModel):
+    id: int
+    card_id: str
+    quantity: int
+    is_foil: bool
+    obtained_at: datetime
+    card: CardResponse
+
+    class Config:
+        from_attributes = True
+
+class UserCollectionResponse(BaseModel):
+    total_cards: int
+    unique_cards: int
+    total_set_cards: int
+    completion_percentage: float
+    items: List[UserCardResponse]
+

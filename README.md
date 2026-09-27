@@ -113,6 +113,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 14**: Cosmetics, Sleeves & Binder Customization (Custom card sleeves, atmospheric binder themes, tournament playmats, glowing avatar frames, prestige titles, interactive dressing room stage with card flip preview, and collection/profile styling integration)
 - ✅ **Phase 15**: Player Shops & Custom Storefronts (Personalized collector stalls in the Nexus Bazaar, custom banners and slogans, center stage card pedestal, shop visit tracking, community upvotes/likes, inventory stocking, and 1-click storefront buying)
 - ✅ **Phase 16**: Card Grading & Appraisal System (Nexus Grading Service - NGS: 4-point diagnostic evaluation for Centering, Corners, Edges, Surface; 1.0–10.0 grades including Gem Mint & Pristine; tamper-proof acrylic slab encapsulation; authentic cert verification registry; and up to 5x value multipliers)
-- ⏳ **Phase 17**: Coming Soon (Deck Builder & TCG Battle Engine)
+- ✅ **Phase 17**: Deck Builder & TCG Battle Engine (Turn-based stadium duels against Kanto Gym Leaders Brock, Misty, Lt. Surge, and Giovanni; custom squad builder with elemental type synergy & average HP analysis; interactive combat with attacks, elemental weaknesses, special moves, energy charging, bench swapping, and authentic Gym Badges)
+- ⏳ **Phase 18**: Coming Soon (Guilds, Clubs & Clan Vaults)
 
 

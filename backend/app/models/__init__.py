@@ -10,6 +10,7 @@ from app.models.social import Follow
 from app.models.cosmetic import CosmeticItem, UserCosmetic, UserEquippedCosmetics
 from app.models.player_shop import PlayerShop, PlayerShopItem, ShopUpvote
 from app.models.grading import GradedCard
+from app.models.battle import Deck, DeckCard, BattleHistory
 
 __all__ = [
     "User",
@@ -37,6 +38,9 @@ __all__ = [
     "PlayerShopItem",
     "ShopUpvote",
     "GradedCard",
+    "Deck",
+    "DeckCard",
+    "BattleHistory",
 ]
 
 

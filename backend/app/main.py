@@ -13,7 +13,8 @@ from app.models import (
     TradeOffer, TradeOfferItem, Follow,
     CosmeticItem, UserCosmetic, UserEquippedCosmetics,
     PlayerShop, PlayerShopItem, ShopUpvote,
-    GradedCard
+    GradedCard,
+    Deck, DeckCard, BattleHistory
 )
 from app.services.missions_service import ensure_default_missions
 

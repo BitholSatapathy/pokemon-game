@@ -1418,3 +1418,263 @@ export const verifyCertNumber = async (certNumber: string): Promise<GradedCard> 
   }
   return res.json();
 };
+
+
+// ============================================================
+// PHASE 17 — Deck Builder & TCG Battle Engine (Gym Leader Arena)
+// ============================================================
+
+export interface DeckCardItemIn {
+  card_id: string;
+  quantity: number;
+}
+
+export interface DeckCardItemOut {
+  id: number;
+  card_id: string;
+  name: string;
+  image_url: string;
+  types: string;
+  hp: number;
+  rarity: string;
+  quantity: number;
+}
+
+export interface DeckCreateIn {
+  name: string;
+  cover_card_id?: string;
+  cards: DeckCardItemIn[];
+}
+
+export interface DeckUpdateIn {
+  name?: string;
+  cover_card_id?: string;
+  cards?: DeckCardItemIn[];
+  is_active?: boolean;
+}
+
+export interface DeckOut {
+  id: number;
+  user_id: number;
+  name: string;
+  cover_card_id?: string;
+  cover_card_image?: string;
+  is_active: boolean;
+  card_count: number;
+  avg_hp: number;
+  types_distribution: Record<string, number>;
+  cards: DeckCardItemOut[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GymLeader {
+  id: string;
+  name: string;
+  title: string;
+  badge_name: string;
+  badge_icon: string;
+  difficulty: string;
+  avatar_url: string;
+  recommended_level: number;
+  element_type: string;
+  reward_coins: number;
+  reward_xp: number;
+  team_preview: string[];
+}
+
+export interface BattleCardState {
+  card_id: string;
+  name: string;
+  image_url: string;
+  types: string;
+  max_hp: number;
+  current_hp: number;
+  basic_atk_name: string;
+  basic_atk_dmg: number;
+  special_atk_name: string;
+  special_atk_dmg: number;
+  energy: number;
+}
+
+export interface BattleStateOut {
+  battle_id: string;
+  gym_id: string;
+  gym_name: string;
+  badge_name: string;
+  turn: number;
+  player_active: BattleCardState;
+  player_bench: BattleCardState[];
+  opponent_active: BattleCardState;
+  opponent_bench: BattleCardState[];
+  is_over: boolean;
+  winner?: 'player' | 'opponent';
+  reward_coins: number;
+  reward_xp: number;
+  logs: string[];
+}
+
+export interface BattleActionIn {
+  action: 'attack' | 'special' | 'charge' | 'switch';
+  switch_idx?: number;
+}
+
+export interface BattleSimulateOut {
+  gym_id: string;
+  gym_leader_name: string;
+  badge_name: string;
+  result: 'win' | 'loss';
+  turns: number;
+  logs: string[];
+  reward_coins: number;
+  reward_xp: number;
+  player_cards_used: string[];
+  opponent_cards_used: string[];
+}
+
+export interface BattleHistoryItem {
+  id: number;
+  gym_id: string;
+  gym_leader_name: string;
+  result: 'win' | 'loss';
+  turns_played: number;
+  reward_coins: number;
+  reward_xp: number;
+  created_at: string;
+}
+
+export const fetchUserDecks = async (token: string): Promise<DeckOut[]> => {
+  const res = await fetch(`${API_BASE}/decks`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch user decks');
+  return res.json();
+};
+
+export const createDeck = async (token: string, payload: DeckCreateIn): Promise<DeckOut> => {
+  const res = await fetch(`${API_BASE}/decks`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create deck');
+  }
+  return res.json();
+};
+
+export const updateDeck = async (
+  token: string,
+  deckId: number,
+  payload: DeckUpdateIn,
+): Promise<DeckOut> => {
+  const res = await fetch(`${API_BASE}/decks/${deckId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update deck');
+  }
+  return res.json();
+};
+
+export const deleteDeck = async (token: string, deckId: number): Promise<any> => {
+  const res = await fetch(`${API_BASE}/decks/${deckId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to delete deck');
+  return res.json();
+};
+
+export const activateDeck = async (token: string, deckId: number): Promise<DeckOut> => {
+  const res = await fetch(`${API_BASE}/decks/${deckId}/activate`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to activate deck');
+  return res.json();
+};
+
+export const fetchGymLeaders = async (): Promise<GymLeader[]> => {
+  const res = await fetch(`${API_BASE}/battle/gyms`);
+  if (!res.ok) throw new Error('Failed to fetch gym leaders');
+  return res.json();
+};
+
+export const simulateGymBattle = async (
+  token: string,
+  gymId: string,
+  deckId?: number,
+): Promise<BattleSimulateOut> => {
+  const res = await fetch(`${API_BASE}/battle/simulate`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ gym_id: gymId, deck_id: deckId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to simulate battle');
+  }
+  return res.json();
+};
+
+export const startInteractiveBattle = async (
+  token: string,
+  gymId: string,
+  deckId?: number,
+): Promise<BattleStateOut> => {
+  const res = await fetch(`${API_BASE}/battle/start`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ gym_id: gymId, deck_id: deckId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to initiate duel');
+  }
+  return res.json();
+};
+
+export const sendBattleAction = async (
+  token: string,
+  battleId: string,
+  payload: BattleActionIn,
+): Promise<BattleStateOut> => {
+  const res = await fetch(`${API_BASE}/battle/${battleId}/action`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to execute battle action');
+  }
+  return res.json();
+};
+
+export const fetchBattleHistory = async (token: string): Promise<BattleHistoryItem[]> => {
+  const res = await fetch(`${API_BASE}/battle/history`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch battle history');
+  return res.json();
+};

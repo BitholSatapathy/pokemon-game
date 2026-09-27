@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     ]
     DATABASE_URL: str = "sqlite:///./tcg.db"
 
+    # JWT Authentication Settings
+    SECRET_KEY: str = "tcg_collector_super_secret_vibe_coding_key_2026_change_in_prod"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+
     class Config:
         case_sensitive = True
         env_file = ".env"

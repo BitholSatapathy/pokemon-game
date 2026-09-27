@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { Footer } from './components/layout/Footer';
+import { AuthModal } from './components/auth/AuthModal';
 import { DashboardPage } from './pages/DashboardPage';
 import { ShopPage } from './pages/ShopPage';
 import { PacksPage } from './pages/PacksPage';
@@ -15,43 +17,73 @@ import { ProfilePage } from './pages/ProfilePage';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
-export const App: React.FC = () => {
-  const [user, setUser] = useState<UserProfile>(INITIAL_USER);
+const MainLayout: React.FC = () => {
+  const { user: authUser, setUser: setAuthUser } = useAuth();
+  const [localUser, setLocalUser] = useState<UserProfile>(INITIAL_USER);
+
+  // Active user is authUser if logged in, fallback to local/demo user
+  const activeUser = authUser || localUser;
+
+  const handleSetUser: React.Dispatch<React.SetStateAction<UserProfile>> = (value) => {
+    if (typeof value === 'function') {
+      if (authUser) {
+        setAuthUser((prev) => (prev ? value(prev) : null));
+      } else {
+        setLocalUser(value);
+      }
+    } else {
+      if (authUser) {
+        setAuthUser(value);
+      } else {
+        setLocalUser(value);
+      }
+    }
+  };
 
   return (
+    <div className="min-h-screen flex bg-[#0B0B14] text-gray-100 antialiased selection:bg-brand-violet selection:text-white">
+      {/* Left Navigation Sidebar */}
+      <Sidebar />
+
+      {/* Main App Container */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Bar with Search, Currencies, and Profile */}
+        <TopBar user={activeUser} setUser={handleSetUser} />
+
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+          <Routes>
+            <Route path="/" element={<DashboardPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/dashboard" element={<DashboardPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/shop" element={<ShopPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/packs" element={<PacksPage />} />
+            <Route path="/collection" element={<CollectionPage />} />
+            <Route path="/inventory" element={<InventoryPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/market" element={<MarketPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/missions" element={<MissionsPage user={activeUser} setUser={handleSetUser} />} />
+            <Route path="/profile" element={<ProfilePage user={activeUser} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+
+        {/* Footer */}
+        <Footer />
+      </div>
+
+      {/* Auth Modal (Sign In / Register) */}
+      <AuthModal />
+    </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
     <ToastProvider>
-      <Router>
-        <div className="min-h-screen flex bg-[#0B0B14] text-gray-100 antialiased selection:bg-brand-violet selection:text-white">
-          {/* Left Persistent Navigation Sidebar (Matches Concept Art) */}
-          <Sidebar />
-
-          {/* Main App Container */}
-          <div className="flex-1 flex flex-col min-w-0">
-            {/* Top Bar with Search, Currencies, and Profile */}
-            <TopBar user={user} setUser={setUser} />
-
-            {/* Main Content Area */}
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
-              <Routes>
-                {/* Home defaults to the Concept Dashboard */}
-                <Route path="/" element={<DashboardPage user={user} setUser={setUser} />} />
-                <Route path="/dashboard" element={<DashboardPage user={user} setUser={setUser} />} />
-                <Route path="/shop" element={<ShopPage user={user} setUser={setUser} />} />
-                <Route path="/packs" element={<PacksPage />} />
-                <Route path="/collection" element={<CollectionPage />} />
-                <Route path="/inventory" element={<InventoryPage user={user} setUser={setUser} />} />
-                <Route path="/market" element={<MarketPage user={user} setUser={setUser} />} />
-                <Route path="/missions" element={<MissionsPage user={user} setUser={setUser} />} />
-                <Route path="/profile" element={<ProfilePage user={user} />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-
-            {/* Footer */}
-            <Footer />
-          </div>
-        </div>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <MainLayout />
+        </Router>
+      </AuthProvider>
     </ToastProvider>
   );
 };

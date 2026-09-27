@@ -63,4 +63,26 @@ class UserCollectionResponse(BaseModel):
     rarity_breakdown: Optional[dict] = None
     items: List[UserCardResponse]
 
+class CardSellRequest(BaseModel):
+    quantity: int = 1
+    is_foil: bool = False
+
+class CardSellResponse(BaseModel):
+    success: bool
+    message: str
+    card_id: str
+    card_name: str
+    quantity_sold: int
+    coins_earned: int
+    new_coin_balance: int
+    remaining_card_quantity: int
+
+class BulkSellResponse(BaseModel):
+    success: bool
+    message: str
+    cards_sold: int
+    total_coins_earned: int
+    new_coin_balance: int
+
+
 

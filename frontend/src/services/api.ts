@@ -278,3 +278,89 @@ export const fetchMyCollection = async (token: string): Promise<ApiUserCollectio
   }
 };
 
+export interface CardSellResult {
+  success: boolean;
+  message: string;
+  card_id: string;
+  card_name: string;
+  quantity_sold: number;
+  coins_earned: number;
+  new_coin_balance: number;
+  remaining_card_quantity: number;
+}
+
+export interface BulkSellResult {
+  success: boolean;
+  message: string;
+  cards_sold: number;
+  total_coins_earned: number;
+  new_coin_balance: number;
+}
+
+export interface ApiTransaction {
+  id: number;
+  user_id: number;
+  type: string;
+  amount: number;
+  currency: string;
+  reference_id?: string;
+  description?: string;
+  created_at: string;
+}
+
+export const sellCard = async (
+  cardId: string,
+  quantity: number = 1,
+  isFoil: boolean = false,
+  token: string
+): Promise<CardSellResult> => {
+  const res = await fetch(`${API_BASE}/cards/${cardId}/sell`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ quantity, is_foil: isFoil }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to sell card.');
+  }
+  return data;
+};
+
+export const bulkSellDuplicates = async (token: string): Promise<BulkSellResult> => {
+  const res = await fetch(`${API_BASE}/cards/sell-duplicates`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to liquidate duplicate cards.');
+  }
+  return data;
+};
+
+export const fetchMyTransactions = async (token: string): Promise<ApiTransaction[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/packs/transactions/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch transactions');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching transactions:', err);
+    return [];
+  }
+};
+
+

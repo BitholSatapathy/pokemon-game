@@ -6,6 +6,7 @@ from sqlalchemy import or_
 from app.core.database import get_db
 from app.models.user import User
 from app.models.card import Series, CardSet, Card
+from app.models.pack import Transaction
 from app.models.user_card import UserCard
 from app.schemas.card import (
     CardResponse,
@@ -14,10 +15,14 @@ from app.schemas.card import (
     SeriesResponse,
     UserCardResponse,
     UserCollectionResponse,
+    CardSellRequest,
+    CardSellResponse,
+    BulkSellResponse,
 )
 from app.api.deps import get_current_user
 
 router = APIRouter(tags=["Cards & Sets"])
+
 
 @router.get("/sets", response_model=List[SetResponse])
 def get_sets(db: Session = Depends(get_db)):
@@ -132,4 +137,146 @@ def get_card_by_id(card_id: str, db: Session = Depends(get_db)):
             detail=f"Card with id '{card_id}' not found."
         )
     return CardResponse.model_validate(card)
+
+@router.post("/cards/sell-duplicates", response_model=BulkSellResponse)
+def sell_all_duplicates(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Bulk liquidate all duplicate cards (quantity > 1), leaving 1 copy of each card in the player's binder.
+    Payout = 70% of market value per sold copy.
+    """
+    duplicate_cards = (
+        db.query(UserCard)
+        .options(joinedload(UserCard.card))
+        .filter(UserCard.user_id == current_user.id, UserCard.quantity > 1)
+        .all()
+    )
+
+    if not duplicate_cards:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You do not have any duplicate cards in your collection to sell."
+        )
+
+    try:
+        total_cards_sold = 0
+        total_payout = 0
+
+        for uc in duplicate_cards:
+            extra_copies = uc.quantity - 1
+            if extra_copies > 0:
+                card_price = uc.card.market_price if uc.card else 150
+                unit_payout = max(10, int(card_price * 0.70))
+                payout = unit_payout * extra_copies
+
+                total_cards_sold += extra_copies
+                total_payout += payout
+                uc.quantity = 1
+
+        current_user.coins += total_payout
+
+        tx = Transaction(
+            user_id=current_user.id,
+            type="BULK_CARD_SALE",
+            amount=total_payout,
+            currency="coins",
+            reference_id="bulk_duplicates",
+            description=f"Liquidated {total_cards_sold} duplicate cards for {total_payout:,} Coins"
+        )
+        db.add(tx)
+
+        db.commit()
+        db.refresh(current_user)
+
+        return BulkSellResponse(
+            success=True,
+            message=f"Liquidated {total_cards_sold} duplicate cards for {total_payout:,} Coins!",
+            cards_sold=total_cards_sold,
+            total_coins_earned=total_payout,
+            new_coin_balance=current_user.coins
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sell duplicate cards: {str(e)}"
+        )
+
+@router.post("/cards/{card_id}/sell", response_model=CardSellResponse)
+def sell_single_card(
+    card_id: str,
+    sell_req: CardSellRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Sell 1 or more copies of a specific card from inventory for 70% of market value.
+    """
+    card = db.query(Card).filter(Card.id == card_id).first()
+    if not card:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Card '{card_id}' not found."
+        )
+
+    user_card = (
+        db.query(UserCard)
+        .filter(
+            UserCard.user_id == current_user.id,
+            UserCard.card_id == card.id,
+            UserCard.is_foil == sell_req.is_foil
+        )
+        .first()
+    )
+
+    if not user_card or user_card.quantity < sell_req.quantity:
+        current_qty = user_card.quantity if user_card else 0
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot sell {sell_req.quantity}x copies. You only own {current_qty}x copies of {card.name}."
+        )
+
+    try:
+        unit_payout = max(10, int(card.market_price * 0.70))
+        total_payout = unit_payout * sell_req.quantity
+
+        user_card.quantity -= sell_req.quantity
+        remaining_quantity = user_card.quantity
+        if user_card.quantity == 0:
+            db.delete(user_card)
+
+        current_user.coins += total_payout
+
+        tx = Transaction(
+            user_id=current_user.id,
+            type="CARD_SALE",
+            amount=total_payout,
+            currency="coins",
+            reference_id=card.id,
+            description=f"Sold {sell_req.quantity}x {card.name} for {total_payout:,} Coins"
+        )
+        db.add(tx)
+
+        db.commit()
+        db.refresh(current_user)
+
+        return CardSellResponse(
+            success=True,
+            message=f"Successfully sold {sell_req.quantity}x {card.name} for {total_payout:,} Coins!",
+            card_id=card.id,
+            card_name=card.name,
+            quantity_sold=sell_req.quantity,
+            coins_earned=total_payout,
+            new_coin_balance=current_user.coins,
+            remaining_card_quantity=remaining_quantity
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sell card: {str(e)}"
+        )
+
 

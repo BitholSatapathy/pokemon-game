@@ -59,5 +59,8 @@ class UserCollectionResponse(BaseModel):
     unique_cards: int
     total_set_cards: int
     completion_percentage: float
+    total_market_value: int = 0
+    rarity_breakdown: Optional[dict] = None
     items: List[UserCardResponse]
+
 

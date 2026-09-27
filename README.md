@@ -102,5 +102,6 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 3**: Card & Set Database (TCGdex integration, 102 Base Set cards ingested)
 - ✅ **Phase 4**: Shop System (Buy booster packs, deduct coins, player unopened pack inventory, ledger transactions)
 - ✅ **Phase 5**: Pack Opening Engine (PLAYABLE GAME! Server-side slot RNG, 3D card deck flip, permanent collection storage, XP & leveling)
-- ⏳ **Phase 6**: Collection / Binder (Binder tabs, advanced search, sorting, set progress rings, card inspect details)
+- ✅ **Phase 6**: Collection / Binder (Master binder view, 9-pocket sheet simulation, advanced search, sorting, elemental type filters, card flip inspect modal)
+- ⏳ **Phase 7**: Inventory & Card Selling (Separate player inventory, duplicate management, quick sell cards for coins)
 

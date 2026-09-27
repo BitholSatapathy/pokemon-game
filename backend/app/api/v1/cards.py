@@ -55,14 +55,37 @@ def get_my_collection(
     unique_cards = len({uc.card_id for uc in user_cards})
     total_set_cards = db.query(Card).count()
     completion_percentage = round((unique_cards / total_set_cards * 100), 1) if total_set_cards > 0 else 0.0
+    total_market_value = sum(uc.quantity * (uc.card.market_price if uc.card else 0) for uc in user_cards)
+
+    # Rarity breakdown
+    all_cards = db.query(Card).all()
+    rarity_totals = {}
+    for c in all_cards:
+        rarity_totals[c.rarity] = rarity_totals.get(c.rarity, 0) + 1
+
+    owned_unique_ids = {uc.card_id: uc.card.rarity for uc in user_cards if uc.card}
+    owned_rarity_counts = {}
+    for card_id, rarity in owned_unique_ids.items():
+        owned_rarity_counts[rarity] = owned_rarity_counts.get(rarity, 0) + 1
+
+    rarity_breakdown = {}
+    for r, total in rarity_totals.items():
+        rarity_breakdown[r] = {
+            "owned": owned_rarity_counts.get(r, 0),
+            "total": total,
+            "percentage": round((owned_rarity_counts.get(r, 0) / total * 100), 1) if total > 0 else 0.0
+        }
 
     return UserCollectionResponse(
         total_cards=total_cards,
         unique_cards=unique_cards,
         total_set_cards=total_set_cards,
         completion_percentage=completion_percentage,
+        total_market_value=total_market_value,
+        rarity_breakdown=rarity_breakdown,
         items=[UserCardResponse.model_validate(uc) for uc in user_cards]
     )
+
 
 @router.get("/cards", response_model=CardListResponse)
 def get_cards(

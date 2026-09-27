@@ -245,13 +245,22 @@ export interface ApiUserCard {
   card: ApiCard;
 }
 
+export interface RarityStat {
+  owned: number;
+  total: number;
+  percentage: number;
+}
+
 export interface ApiUserCollection {
   total_cards: number;
   unique_cards: number;
   total_set_cards: number;
   completion_percentage: number;
+  total_market_value?: number;
+  rarity_breakdown?: Record<string, RarityStat>;
   items: ApiUserCard[];
 }
+
 
 export const fetchMyCollection = async (token: string): Promise<ApiUserCollection | null> => {
   try {

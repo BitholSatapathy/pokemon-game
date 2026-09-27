@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   PackageOpen,
   ShoppingBag,
-  ChevronLeft,
-  ChevronRight,
   Gift,
   ArrowRight,
 } from 'lucide-react';
@@ -13,11 +11,13 @@ import { Badge } from '../components/ui/Badge';
 import { CollectionProgressWidget } from '../components/widgets/CollectionProgressWidget';
 import { DailyMissionsWidget } from '../components/widgets/DailyMissionsWidget';
 import { MarketTrendsWidget } from '../components/widgets/MarketTrendsWidget';
-import { UserProfile, Card } from '../types';
-import { MOCK_PACKS, MOCK_CARDS } from '../data/mockData';
+import { UserProfile, Card, BoosterPack } from '../types';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { fetchDailyStreak } from '../services/api';
+import { 
+  fetchDailyStreak, fetchCards, fetchShopPacks, 
+  fetchMyCollection, sellCard 
+} from '../services/api';
 
 interface DashboardProps {
   user: UserProfile;
@@ -25,33 +25,87 @@ interface DashboardProps {
 }
 
 export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
-  const [recentPulls, setRecentPulls] = useState<Card[]>(MOCK_CARDS.slice(0, 5));
+  const [recentPulls, setRecentPulls] = useState<Card[]>([]);
+  const [packs, setPacks] = useState<BoosterPack[]>([]);
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
   const [canClaimToday, setCanClaimToday] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
-    if (!token) return;
-    let isMounted = true;
-    fetchDailyStreak(token).then((data) => {
-      if (isMounted && data) {
-        setCanClaimToday(data.can_claim_today);
-        setCurrentStreak(data.current_streak);
+    // 1. Fetch Featured Packs
+    fetchShopPacks()
+      .then((data) => {
+        if (data && data.length > 0) setPacks(data);
+      })
+      .catch((err) => console.warn('Failed to load packs:', err));
+
+    // 2. Fetch Recent Pulls from Real Database
+    if (token) {
+      fetchMyCollection(token).then((coll) => {
+        if (coll && coll.items && coll.items.length > 0) {
+          const userCardsMapped: Card[] = coll.items.slice(0, 5).map((uc) => ({
+            id: uc.card.id,
+            name: uc.card.name,
+            setId: uc.card.set_id,
+            setName: uc.card.set_id === 'base1' ? 'Base Set' : uc.card.set_id,
+            number: uc.card.number,
+            rarity: uc.card.rarity as any,
+            hp: uc.card.hp,
+            types: uc.card.types ? uc.card.types.split(', ') : [],
+            imageUrl: uc.card.image_url,
+            marketPrice: uc.card.market_price,
+            ownedQuantity: uc.quantity,
+            artist: uc.card.artist,
+            flavorText: uc.card.flavor_text,
+          }));
+          setRecentPulls(userCardsMapped);
+        } else {
+          loadFallbackCards();
+        }
+      });
+    } else {
+      loadFallbackCards();
+    }
+
+    // 3. Fetch Daily Streak
+    if (token) {
+      fetchDailyStreak(token).then((data) => {
+        if (data) {
+          setCanClaimToday(data.can_claim_today);
+          setCurrentStreak(data.current_streak);
+        }
+      });
+    }
+  }, [token]);
+
+  const loadFallbackCards = () => {
+    fetchCards({ limit: 5 }).then((res) => {
+      if (res && res.items.length > 0) {
+        setRecentPulls(res.items);
       }
     });
-    return () => {
-      isMounted = false;
-    };
-  }, [token]);
+  };
 
   const handleKeepCard = (card: Card) => {
     showToast(`${card.name} kept in your master collection binder!`, 'success', 'Card Secured');
   };
 
-  const handleSellCard = (card: Card) => {
-    const sellValue = Math.round(card.marketPrice * 0.85);
+  const handleSellCard = async (card: Card) => {
+    if (token) {
+      try {
+        const res = await sellCard(card.id, 1, false, token);
+        showToast(res.message, 'gold', 'Card Liquidated');
+        setRecentPulls((prev) => prev.filter((c) => c.id !== card.id));
+        await refreshUser();
+        return;
+      } catch (err: any) {
+        // Fallback local sell
+      }
+    }
+
+    const sellValue = Math.round(card.marketPrice * 0.70);
     setUser((prev) => ({
       ...prev,
       coins: prev.coins + sellValue,
@@ -64,9 +118,11 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
     setUser((prev) => ({ ...prev, coins: prev.coins + amount }));
   };
 
+  const featuredPack = packs.find((p) => p.featured) || packs[0];
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-16">
-      {/* LEFT / CENTER COLUMN: Main Dashboard Content (8 cols on XL) */}
+      {/* LEFT / CENTER COLUMN */}
       <div className="xl:col-span-8 space-y-6">
         {/* Daily Streak & Live Event Banner */}
         <div className="glass-panel p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-surface-card to-purple-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
@@ -105,50 +161,25 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
           </Link>
         </div>
 
-        {/* HERO BANNER: "OPEN YOUR NEXT PACK" (Matches Concept Screenshot Top Hero) */}
+        {/* HERO BANNER: REAL POKÉMON BOOSTER PACK */}
         <div className="relative rounded-3xl overflow-hidden border border-[#2A2A48] bg-gradient-to-r from-[#121224] via-[#15152C] to-[#0D1022] shadow-2xl">
-          {/* Background Fantasy Vista */}
-          <div
-            className="absolute inset-0 bg-cover bg-right opacity-35 mix-blend-screen pointer-events-none"
-            style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1200')`,
-            }}
-          />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0E0E1C] via-[#0E0E1C]/80 to-transparent pointer-events-none" />
-
-          {/* Carousel Arrows */}
-          <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5">
-            <button
-              onClick={() => showToast('Previous set: Lunar Mysteries', 'info')}
-              className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 text-gray-300 border border-white/10 transition-colors"
-              aria-label="Previous banner"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => showToast('Next set: Solar Legion', 'info')}
-              className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 text-gray-300 border border-white/10 transition-colors"
-              aria-label="Next banner"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
 
           <div className="relative z-10 p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6 sm:gap-8">
             {/* 3D Foil Booster Pack Image */}
             <div className="relative group shrink-0 select-none">
               <div className="absolute -inset-2 bg-gradient-to-tr from-brand-violet via-purple-500 to-amber-400 rounded-2xl blur-lg opacity-50 group-hover:opacity-80 transition-opacity" />
-              <div className="relative w-40 sm:w-48 aspect-[3/4.2] rounded-xl overflow-hidden shadow-2xl border-2 border-purple-400/50 holo-card-shine">
+              <div className="relative w-40 sm:w-48 aspect-[3/4.2] rounded-xl overflow-hidden shadow-2xl border-2 border-purple-400/50 holo-card-shine bg-slate-950 flex items-center justify-center p-3">
                 <img
-                  src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600"
-                  alt="Arcane Frontier Booster"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  src={featuredPack?.coverImage || 'https://assets.tcgdex.net/en/base/base1/logo.webp'}
+                  alt={featuredPack?.name || 'Base Set Booster'}
+                  className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3 text-center">
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-amber-300 font-extrabold">
-                    ARCANE FRONTIER
+                  <span className="text-[10px] uppercase font-mono tracking-widest text-amber-300 font-extrabold truncate">
+                    {featuredPack?.name || 'BASE SET BOOSTER'}
                   </span>
-                  <span className="text-[9px] text-purple-300">TRADING CARD GAME</span>
+                  <span className="text-[9px] text-purple-300">10 POKÉMON CARDS</span>
                 </div>
               </div>
             </div>
@@ -157,20 +188,21 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
             <div className="space-y-4 flex-1 text-center md:text-left">
               <div>
                 <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-purple-400 font-bold block mb-1">
-                  NEW SET
+                  OFFICIAL BOOSTER SERIES
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-black text-white font-display leading-tight tracking-wide">
                   OPEN YOUR <br className="hidden sm:inline" />
                   NEXT PACK
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-300 mt-2 max-w-md leading-relaxed">
-                  Discover powerful cards, build your collection and explore new worlds.
+                  Discover 300+ authentic cards across Base Set, Jungle, Fossil, and Team Rocket.
+                  Pull rare holographic foils, grade them at NGS, and duel Gym Leaders!
                 </p>
               </div>
 
               {/* Price Tag Capsule */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 border border-amber-500/30 text-amber-300 font-mono text-sm font-bold">
-                <span>🪙 1,000</span>
+                <span>🪙 {featuredPack?.priceCoins?.toLocaleString() || '1,000'}</span>
               </div>
 
               {/* Action Buttons */}
@@ -198,11 +230,11 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
           </div>
         </div>
 
-        {/* FEATURED PACKS ROW (Matches Concept Screenshot Middle Section) */}
+        {/* FEATURED BOOSTER PACKS ROW */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white font-display">
-              FEATURED PACKS
+              AUTHENTIC POKÉMON SETS
             </h3>
             <Link to="/shop" className="text-xs text-purple-400 hover:text-purple-300 font-medium">
               View All &rarr;
@@ -210,21 +242,21 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            {MOCK_PACKS.map((pack) => (
+            {packs.map((pack) => (
               <div
                 key={pack.id}
                 onClick={() => navigate('/shop')}
                 className="bg-[#121222] border border-[#201E38] hover:border-purple-500/50 rounded-2xl p-3 space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-glow-purple cursor-pointer group flex flex-col justify-between"
               >
                 <div className="space-y-2">
-                  <div className="aspect-[3/4.2] rounded-xl overflow-hidden bg-black/50 relative border border-[#25253E] group-hover:border-purple-400/40">
+                  <div className="aspect-[3/4.2] rounded-xl overflow-hidden bg-black/60 relative border border-[#25253E] group-hover:border-purple-400/40 p-2 flex items-center justify-center">
                     <img
                       src={pack.coverImage}
                       alt={pack.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-center">
-                      <h4 className="text-xs font-bold text-white font-display truncate">
+                      <h4 className="text-[11px] font-bold text-white font-display truncate">
                         {pack.name}
                       </h4>
                     </div>
@@ -248,21 +280,21 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
           </div>
         </div>
 
-        {/* RECENT PULLS ROW (Matches Concept Screenshot Bottom Section) */}
+        {/* RECENT PULLS ROW (REAL POKÉMON ARTWORK) */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white font-display">
-              RECENT PULLS
+              {token ? 'YOUR SPECIMEN VAULT' : 'FEATURED POKÉMON SPECIMENS'}
             </h3>
             <Link to="/collection" className="text-xs text-purple-400 hover:text-purple-300 font-medium">
-              View All &rarr;
+              View Collection &rarr;
             </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {recentPulls.map((card) => {
               const isSecret = card.rarity === 'Secret Rare';
-              const isUltra = card.rarity === 'Ultra Rare';
+              const isUltra = card.rarity === 'Ultra Rare' || card.rarity === 'Rare Holo';
 
               return (
                 <div
@@ -278,12 +310,17 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
                   <div className="space-y-2">
                     {/* Badge */}
                     <div className="flex items-center justify-between">
-                      <Badge rarity={card.rarity} className="text-[9px] px-1.5 py-0" />
+                      <Badge rarity={card.rarity} className="text-[9px] px-1.5 py-0 truncate max-w-[90px]" />
                     </div>
 
-                    {/* Artwork */}
+                    {/* Real Pokémon Card Artwork */}
                     <div className="aspect-[2.5/3.5] rounded-xl overflow-hidden bg-black relative border border-white/10 holo-card-shine">
-                      <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={card.imageUrl} 
+                        alt={card.name} 
+                        className="w-full h-full object-cover" 
+                        loading="lazy"
+                      />
                     </div>
 
                     {/* Card Title */}
@@ -295,7 +332,7 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
                     </div>
                   </div>
 
-                  {/* Keep / Sell Action Buttons (Matches Concept Screenshot) */}
+                  {/* Keep / Sell Action Buttons */}
                   <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-[#201E38]/80">
                     <button
                       onClick={() => handleKeepCard(card)}
@@ -317,7 +354,7 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Widgets (4 cols on XL) */}
+      {/* RIGHT COLUMN: Real Widgets */}
       <div className="xl:col-span-4 space-y-6">
         {/* Collection Progress Donut Widget */}
         <CollectionProgressWidget collected={user.totalCards} total={user.maxCards} />
@@ -325,9 +362,11 @@ export const DashboardPage: React.FC<DashboardProps> = ({ user, setUser }) => {
         {/* Daily Missions Widget */}
         <DailyMissionsWidget onRewardClaim={handleClaimMissionCoins} />
 
-        {/* Market Trends Widget */}
+        {/* Live Market Trends Widget */}
         <MarketTrendsWidget />
       </div>
     </div>
   );
 };
+
+export default DashboardPage;

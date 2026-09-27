@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.api.api_router import api_router
-from app.api.v1 import health
-from app.models import User, Series, CardSet, Card, Pack, PlayerPack, Transaction
+from app.models import User, Series, CardSet, Card, Pack, PlayerPack, Transaction, UserCard, Mission, UserMission
+from app.services.missions_service import ensure_default_missions
 
 def seed_default_packs():
     """Seed initial shop booster packs if table is empty."""
@@ -74,7 +74,13 @@ async def lifespan(app: FastAPI):
     # Initialize all database tables on startup
     Base.metadata.create_all(bind=engine)
     seed_default_packs()
+    db = SessionLocal()
+    try:
+        ensure_default_missions(db)
+    finally:
+        db.close()
     yield
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

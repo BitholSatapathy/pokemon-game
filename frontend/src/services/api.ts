@@ -363,4 +363,115 @@ export const fetchMyTransactions = async (token: string): Promise<ApiTransaction
   }
 };
 
+export interface ApiUserMission {
+  id: string;
+  mission_id: string;
+  category: 'daily' | 'weekly' | 'achievement';
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  percent: number;
+  is_completed: boolean;
+  is_claimed: boolean;
+  reward_xp: number;
+  reward_coins: number;
+  reward_gems: number;
+  icon: string;
+}
+
+export interface ApiMissionsSummary {
+  daily: ApiUserMission[];
+  weekly: ApiUserMission[];
+  achievements: ApiUserMission[];
+  daily_reset_seconds: number;
+  weekly_reset_seconds: number;
+  claimable_count: number;
+}
+
+export interface ApiMissionClaimResult {
+  success: boolean;
+  message: string;
+  mission_id: string;
+  reward_xp: number;
+  reward_coins: number;
+  reward_gems: number;
+  new_coins: number;
+  new_gems: number;
+  new_level: number;
+  new_xp: number;
+  leveled_up: boolean;
+  level_up_bonuses?: {
+    old_level: number;
+    new_level: number;
+    bonus_coins: number;
+    bonus_gems: number;
+    new_rank: string;
+  };
+}
+
+export interface ApiPlayerProgression {
+  level: number;
+  title: string;
+  xp: number;
+  next_level_xp: number;
+  xp_percentage: number;
+  coins: number;
+  gems: number;
+  total_packs_opened: number;
+  total_cards_collected: number;
+}
+
+export const fetchMyMissions = async (token: string): Promise<ApiMissionsSummary | null> => {
+  try {
+    const res = await fetch(`${API_BASE}/missions/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch missions');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching missions:', err);
+    return null;
+  }
+};
+
+export const claimMissionReward = async (
+  missionId: string,
+  token: string
+): Promise<ApiMissionClaimResult> => {
+  const res = await fetch(`${API_BASE}/missions/${missionId}/claim`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to claim mission reward.');
+  }
+  return data;
+};
+
+export const fetchMyProgression = async (token: string): Promise<ApiPlayerProgression | null> => {
+  try {
+    const res = await fetch(`${API_BASE}/missions/progression/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch player progression');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching progression:', err);
+    return null;
+  }
+};
+
+
 

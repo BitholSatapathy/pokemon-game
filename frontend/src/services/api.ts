@@ -1,4 +1,4 @@
-import { Card } from '../types';
+import { Card, BoosterPack } from '../types';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
@@ -24,6 +24,33 @@ export interface ApiSet {
   logo_url?: string;
   symbol_url?: string;
   release_date?: string;
+}
+
+export interface ApiPack {
+  id: string;
+  name: string;
+  set_id: string;
+  price_coins: number;
+  cards_per_pack: number;
+  cover_image: string;
+  description?: string;
+  is_featured: boolean;
+}
+
+export interface ApiPlayerPack {
+  id: number;
+  pack_id: string;
+  quantity: number;
+  obtained_at: string;
+  pack: ApiPack;
+}
+
+export interface PurchaseResult {
+  success: boolean;
+  message: string;
+  pack: ApiPack;
+  remaining_coins: number;
+  pack_quantity: number;
 }
 
 export const fetchSets = async (): Promise<ApiSet[]> => {
@@ -56,7 +83,6 @@ export const fetchCards = async (params: {
     if (!res.ok) throw new Error('Failed to fetch cards');
     const data = await res.json();
 
-    // Map ApiCard to frontend Card type
     const items: Card[] = data.items.map((c: ApiCard) => ({
       id: c.id,
       name: c.name,
@@ -68,7 +94,7 @@ export const fetchCards = async (params: {
       types: c.types ? c.types.split(', ') : [],
       imageUrl: c.image_url,
       marketPrice: c.market_price,
-      ownedQuantity: c.name === 'Charizard' ? 1 : c.name === 'Pikachu' ? 3 : c.name === 'Blastoise' ? 1 : 0, // mock ownership for prototype
+      ownedQuantity: c.name === 'Charizard' ? 1 : c.name === 'Pikachu' ? 3 : c.name === 'Blastoise' ? 1 : 0,
       artist: c.artist,
       flavorText: c.flavor_text,
     }));
@@ -103,5 +129,60 @@ export const fetchCardById = async (cardId: string): Promise<Card | null> => {
   } catch (err) {
     console.warn('API error fetching card:', err);
     return null;
+  }
+};
+
+// Booster Packs API
+export const fetchShopPacks = async (): Promise<BoosterPack[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/packs`);
+    if (!res.ok) throw new Error('Failed to fetch shop packs');
+    const data: ApiPack[] = await res.json();
+    return data.map((p) => ({
+      id: p.id,
+      name: p.name,
+      series: 'Base Expansion',
+      priceCoins: p.price_coins,
+      cardsCount: p.cards_per_pack,
+      coverImage: p.cover_image,
+      description: p.description || 'Authentic booster pack.',
+      featured: p.is_featured,
+      slots: ['common', 'common', 'common', 'uncommon', 'uncommon', 'uncommon', 'reverse', 'reverse', 'rare', 'special'],
+    }));
+  } catch (err) {
+    console.warn('API error fetching packs:', err);
+    return [];
+  }
+};
+
+export const purchaseBoosterPack = async (packId: string, token: string): Promise<PurchaseResult> => {
+  const res = await fetch(`${API_BASE}/packs/${packId}/purchase`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to purchase booster pack.');
+  }
+  return data;
+};
+
+export const fetchPlayerPacks = async (token: string): Promise<ApiPlayerPack[]> => {
+  try {
+    const res = await fetch(`${API_BASE}/packs/inventory/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch player packs');
+    return await res.json();
+  } catch (err) {
+    console.warn('API error fetching player packs:', err);
+    return [];
   }
 };

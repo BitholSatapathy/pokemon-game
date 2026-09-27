@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Boxes, PackageOpen, Coins, DollarSign, ArrowRightLeft, Sparkles, Check } from 'lucide-react';
+import { Boxes, PackageOpen, Coins, DollarSign, ArrowRightLeft, Sparkles, Check, Database } from 'lucide-react';
 import { Tabs } from '../components/ui/Tabs';
 import { CardPanel } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { UserProfile, Card } from '../types';
 import { MOCK_CARDS, MOCK_PACKS } from '../data/mockData';
+import { fetchPlayerPacks, ApiPlayerPack } from '../services/api';
 
 interface InventoryProps {
   user: UserProfile;
@@ -17,12 +20,35 @@ interface InventoryProps {
 
 export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
   const [activeTab, setActiveTab] = useState<'packs' | 'cards' | 'items'>('packs');
+  const [playerPacks, setPlayerPacks] = useState<ApiPlayerPack[]>([]);
+  const [isLoadingPacks, setIsLoadingPacks] = useState(false);
   const [sellingCard, setSellingCard] = useState<Card | null>(null);
+  const { isAuthenticated, token } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  // Mock inventory packs
-  const inventoryPacks = [
+  useEffect(() => {
+    let isMounted = true;
+    const loadInventoryPacks = async () => {
+      if (token) {
+        setIsLoadingPacks(true);
+        const packs = await fetchPlayerPacks(token);
+        if (isMounted) {
+          setPlayerPacks(packs);
+          setIsLoadingPacks(false);
+        }
+      }
+    };
+    if (activeTab === 'packs') {
+      loadInventoryPacks();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [token, activeTab]);
+
+  // Fallback mock inventory packs if user not logged in
+  const fallbackPacks = [
     { pack: MOCK_PACKS[0], count: 3 },
     { pack: MOCK_PACKS[1], count: 1 },
   ];
@@ -32,7 +58,7 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
 
   const handleConfirmSell = () => {
     if (!sellingCard) return;
-    const sellValue = Math.round(sellingCard.marketPrice * 0.85); // 85% liquidity payout
+    const sellValue = Math.round(sellingCard.marketPrice * 0.85);
 
     setUser((prev) => ({
       ...prev,
@@ -47,8 +73,12 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
     setSellingCard(null);
   };
 
+  const totalPacksCount = playerPacks.length > 0
+    ? playerPacks.reduce((acc, p) => acc + p.quantity, 0)
+    : fallbackPacks.reduce((a, b) => a + b.count, 0);
+
   const tabs = [
-    { id: 'packs', label: 'Unopened Packs', count: inventoryPacks.reduce((a, b) => a + b.count, 0) },
+    { id: 'packs', label: 'Unopened Packs', count: totalPacksCount },
     { id: 'cards', label: 'Tradable Cards', count: duplicateCards.length },
     { id: 'items', label: 'Special Items', count: 2 },
   ];
@@ -56,21 +86,26 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
   return (
     <div className="space-y-8 pb-16">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#201E38] pb-6">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-brand-purple uppercase tracking-wider">
             <Boxes className="w-3.5 h-3.5" />
-            <span>Phase 7 & 8 Module</span>
+            <span>Phases 4 & 7 Engine</span>
+            {isAuthenticated && playerPacks.length > 0 && (
+              <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/40">
+                <Database className="w-3 h-3" /> Live Vault Synchronized
+              </span>
+            )}
           </div>
           <h1 className="text-3xl font-extrabold text-white font-display mt-1">PLAYER INVENTORY</h1>
           <p className="text-xs sm:text-sm text-gray-400">
-            Items, duplicate assets, and boosters ready for unboxing, liquidation, or trading.
+            Unopened booster packs, duplicate assets, and special items in your personal vault.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-card border border-amber-500/40 text-xs font-mono">
-            <Coins className="w-3.5 h-3.5 text-brand-gold" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141424] border border-amber-500/40 text-xs font-mono">
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-amber-300 font-bold">{user.coins.toLocaleString()} 🪙</span>
           </div>
           <Tabs tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as any)} />
@@ -80,51 +115,98 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
       {/* Tab 1: Unopened Packs */}
       {activeTab === 'packs' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inventoryPacks.map(({ pack, count }) => (
-              <CardPanel key={pack.id} className="flex gap-4 items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 aspect-[3/4] rounded-lg overflow-hidden border border-surface-border bg-black/40 shrink-0">
-                    <img src={pack.coverImage} alt={pack.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-white font-display">{pack.name}</h4>
-                    <span className="text-xs text-brand-purple font-mono">{pack.series}</span>
-                    <div className="text-xs text-gray-400 mt-1">
-                      In Stock: <strong className="text-white font-mono">{count}x Packs</strong>
+          {isLoadingPacks ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <Skeleton key={idx} className="h-32 rounded-2xl" />
+              ))}
+            </div>
+          ) : playerPacks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {playerPacks.map((item) => (
+                <CardPanel key={item.id} className="flex gap-4 items-center justify-between border-[#201E38]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 aspect-[3/4.2] rounded-xl overflow-hidden border border-[#25253E] bg-black/40 shrink-0">
+                      <img src={item.pack.cover_image} alt={item.pack.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-white font-display">{item.pack.name}</h4>
+                      <span className="text-xs text-brand-purple font-mono">Base Set Booster</span>
+                      <div className="text-xs text-gray-400 mt-1">
+                        In Vault: <strong className="text-white font-mono">{item.quantity}x Packs</strong>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-2 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="gold"
-                    onClick={() => navigate('/packs')}
-                    leftIcon={<PackageOpen className="w-3.5 h-3.5 text-black" />}
-                  >
-                    Open
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      showToast(`Listed 1x ${pack.name} for sale on pack market!`, 'gold', 'Pack Listed')
-                    }
-                  >
-                    Sell Pack
-                  </Button>
-                </div>
-              </CardPanel>
-            ))}
-          </div>
+                  <div className="flex flex-col gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="gold"
+                      onClick={() => navigate('/packs')}
+                      leftIcon={<PackageOpen className="w-3.5 h-3.5 text-black" />}
+                    >
+                      Open Pack
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        showToast(`Booster pack listing preview prepared for Phase 12 market.`, 'info')
+                      }
+                    >
+                      Sell Pack
+                    </Button>
+                  </div>
+                </CardPanel>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {fallbackPacks.map(({ pack, count }) => (
+                <CardPanel key={pack.id} className="flex gap-4 items-center justify-between border-[#201E38]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 aspect-[3/4.2] rounded-xl overflow-hidden border border-[#25253E] bg-black/40 shrink-0">
+                      <img src={pack.coverImage} alt={pack.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-white font-display">{pack.name}</h4>
+                      <span className="text-xs text-brand-purple font-mono">{pack.series}</span>
+                      <div className="text-xs text-gray-400 mt-1">
+                        In Stock: <strong className="text-white font-mono">{count}x Packs</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="gold"
+                      onClick={() => navigate('/packs')}
+                      leftIcon={<PackageOpen className="w-3.5 h-3.5 text-black" />}
+                    >
+                      Open
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        showToast(`Listed 1x ${pack.name} for sale on pack market!`, 'gold', 'Pack Listed')
+                      }
+                    >
+                      Sell Pack
+                    </Button>
+                  </div>
+                </CardPanel>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* Tab 2: Duplicate Cards (Selling & Trading) */}
       {activeTab === 'cards' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-surface-card border border-purple-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-[#141424] border border-[#25253E] flex items-center justify-between">
             <span className="text-xs text-gray-300">
               💡 Duplicate cards can be liquidated for instant coins or preserved for player trading.
             </span>
@@ -132,12 +214,12 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {duplicateCards.map((card) => (
-              <CardPanel key={card.id} className="flex items-center justify-between gap-4">
+              <CardPanel key={card.id} className="flex items-center justify-between gap-4 border-[#201E38]">
                 <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={card.imageUrl}
                     alt={card.name}
-                    className="w-14 aspect-[2.5/3.5] rounded object-cover border border-surface-border shrink-0"
+                    className="w-14 aspect-[2.5/3.5] rounded object-cover border border-[#25253E] shrink-0"
                   />
                   <div className="min-w-0">
                     <h4 className="text-sm font-bold text-white truncate">{card.name}</h4>
@@ -180,7 +262,7 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
       {/* Tab 3: Special Items */}
       {activeTab === 'items' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CardPanel className="flex items-center gap-4">
+          <CardPanel className="flex items-center gap-4 border-[#201E38]">
             <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-brand-purple flex items-center justify-center shrink-0">
               <Sparkles className="w-6 h-6" />
             </div>
@@ -190,7 +272,7 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
               <Badge variant="purple" className="mt-2">Equipped</Badge>
             </div>
           </CardPanel>
-          <CardPanel className="flex items-center gap-4">
+          <CardPanel className="flex items-center gap-4 border-[#201E38]">
             <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-brand-gold flex items-center justify-center shrink-0">
               <Coins className="w-6 h-6" />
             </div>
@@ -213,11 +295,11 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
       >
         {sellingCard && (
           <div className="space-y-4">
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-surface-light border border-surface-border">
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-[#17172B] border border-[#25253E]">
               <img
                 src={sellingCard.imageUrl}
                 alt={sellingCard.name}
-                className="w-16 aspect-[2.5/3.5] object-cover rounded-lg border border-surface-border"
+                className="w-16 aspect-[2.5/3.5] object-cover rounded-lg border border-[#25253E]"
               />
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-white">{sellingCard.name}</h4>
@@ -228,12 +310,12 @@ export const InventoryPage: React.FC<InventoryProps> = ({ user, setUser }) => {
               </div>
             </div>
 
-            <div className="text-xs text-gray-300 space-y-1.5 bg-surface-card p-3 rounded-lg border border-surface-border">
+            <div className="text-xs text-gray-300 space-y-1.5 bg-[#121222] p-3 rounded-lg border border-[#201E38]">
               <div className="flex justify-between">
                 <span>Market Reference Value:</span>
                 <span className="font-mono text-white">{sellingCard.marketPrice.toLocaleString()} 🪙</span>
               </div>
-              <div className="flex justify-between text-amber-300 font-bold text-sm pt-1 border-t border-surface-border">
+              <div className="flex justify-between text-amber-300 font-bold text-sm pt-1 border-t border-[#201E38]">
                 <span>Instant Liquidation Payout (85%):</span>
                 <span className="font-mono">+{Math.round(sellingCard.marketPrice * 0.85).toLocaleString()} 🪙</span>
               </div>

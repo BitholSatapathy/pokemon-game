@@ -18,6 +18,7 @@ import { EventsPage } from './pages/EventsPage';
 import TradingPage from './pages/TradingPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { PublicProfilePage } from './pages/PublicProfilePage';
+import { CosmeticsPage } from './pages/CosmeticsPage';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
@@ -69,6 +70,7 @@ const MainLayout: React.FC = () => {
             <Route path="/trading" element={<TradingPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/player/:username" element={<PublicProfilePage />} />
+            <Route path="/cosmetics" element={<CosmeticsPage />} />
             <Route path="/profile" element={<ProfilePage user={activeUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

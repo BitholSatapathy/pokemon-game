@@ -13,6 +13,7 @@ import {
   Flame,
   ArrowLeftRight,
   Trophy,
+  Palette,
   X,
   Menu,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ export const Sidebar: React.FC = () => {
     { to: '/events', label: 'Events & Daily', icon: <Flame className="w-4 h-4 text-amber-400" /> },
     { to: '/trading', label: 'Trading', icon: <ArrowLeftRight className="w-4 h-4 text-cyan-400" /> },
     { to: '/leaderboard', label: 'Leaderboard', icon: <Trophy className="w-4 h-4 text-yellow-400" /> },
+    { to: '/cosmetics', label: 'Cosmetics', icon: <Palette className="w-4 h-4 text-pink-400" /> },
     { to: '/profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
   ];
 

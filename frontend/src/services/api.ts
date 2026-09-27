@@ -1076,3 +1076,96 @@ export const fetchPublicProfile = async (username: string, token?: string): Prom
   }
   return res.json();
 };
+
+
+// ============================================================
+// PHASE 14 — Cosmetics, Sleeves & Binder Customization
+// ============================================================
+
+export type CosmeticType = 'sleeve' | 'binder_theme' | 'playmat' | 'avatar_frame' | 'title';
+export type CosmeticRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+export interface CosmeticItem {
+  id: string;
+  name: string;
+  type: CosmeticType;
+  rarity: CosmeticRarity;
+  price_coins: number;
+  price_gems: number;
+  preview_url?: string;
+  asset_data?: string;
+  description?: string;
+  is_default: boolean;
+  is_owned: boolean;
+  is_equipped: boolean;
+}
+
+export interface EquippedCosmetics {
+  sleeve?: CosmeticItem;
+  binder_theme?: CosmeticItem;
+  playmat?: CosmeticItem;
+  avatar_frame?: CosmeticItem;
+  title?: CosmeticItem;
+}
+
+export const fetchCosmeticsShop = async (token?: string): Promise<CosmeticItem[]> => {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/cosmetics/shop`, { headers });
+  if (!res.ok) throw new Error('Failed to fetch cosmetics shop');
+  return res.json();
+};
+
+export const fetchMyEquippedCosmetics = async (token: string): Promise<EquippedCosmetics> => {
+  const res = await fetch(`${API_BASE}/cosmetics/equipped`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch equipped cosmetics');
+  return res.json();
+};
+
+export const fetchUserEquippedCosmetics = async (username: string): Promise<EquippedCosmetics> => {
+  const res = await fetch(`${API_BASE}/cosmetics/equipped/${encodeURIComponent(username)}`);
+  if (!res.ok) throw new Error('Failed to fetch player equipped cosmetics');
+  return res.json();
+};
+
+export const buyCosmetic = async (
+  token: string,
+  cosmeticId: string,
+  currency: 'coins' | 'gems' = 'coins',
+): Promise<any> => {
+  const res = await fetch(`${API_BASE}/cosmetics/buy/${encodeURIComponent(cosmeticId)}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ currency }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to purchase cosmetic item');
+  }
+  return res.json();
+};
+
+export const equipCosmetic = async (
+  token: string,
+  slot: string,
+  cosmeticId: string | null,
+): Promise<EquippedCosmetics> => {
+  const res = await fetch(`${API_BASE}/cosmetics/equip`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ slot, cosmetic_id: cosmeticId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to equip cosmetic item');
+  }
+  return res.json();
+};

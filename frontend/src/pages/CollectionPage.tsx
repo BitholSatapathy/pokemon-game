@@ -23,7 +23,7 @@ import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Card, CardRarity } from '../types';
 import { MOCK_CARDS } from '../data/mockData';
-import { fetchCards, fetchMyCollection } from '../services/api';
+import { fetchCards, fetchMyCollection, fetchMyEquippedCosmetics, EquippedCosmetics } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -72,15 +72,22 @@ export const CollectionPage: React.FC = () => {
     'Colorless',
   ];
 
+  const [equippedCosmetics, setEquippedCosmetics] = useState<EquippedCosmetics | null>(null);
+
   useEffect(() => {
     let isMounted = true;
     const loadCards = async () => {
       setIsLoading(true);
       try {
-        const [cardsRes, collRes] = await Promise.all([
+        const [cardsRes, collRes, eqRes] = await Promise.all([
           fetchCards({ set_id: 'base1', limit: 110 }),
           token ? fetchMyCollection(token) : Promise.resolve(null),
+          token ? fetchMyEquippedCosmetics(token).catch(() => null) : Promise.resolve(null),
         ]);
+
+        if (isMounted && eqRes) {
+          setEquippedCosmetics(eqRes);
+        }
 
         const ownedMap = new Map<string, number>();
         if (collRes && collRes.items) {
@@ -500,7 +507,13 @@ export const CollectionPage: React.FC = () => {
           </div>
 
           {/* 3x3 Binder Sheet Container with Stitch Border */}
-          <div className="p-6 rounded-3xl bg-[#0F0F1B] border-4 border-[#24213F] shadow-2xl relative">
+          <div className={`p-6 rounded-3xl shadow-2xl relative border-4 transition-all duration-500 ${equippedCosmetics?.binder_theme?.asset_data || 'bg-[#0F0F1B] border-[#24213F]'}`}>
+            {equippedCosmetics?.sleeve && (
+              <div className="absolute top-2 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-[10px] font-mono text-purple-300">
+                <span>Sleeve:</span>
+                <span className="font-bold text-white">{equippedCosmetics.sleeve.name}</span>
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-6 aspect-[3/4]">
               {Array.from({ length: 9 }).map((_, slotIdx) => {
                 const card = currentBinderCards[slotIdx];

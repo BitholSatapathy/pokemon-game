@@ -110,6 +110,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 11**: Events & Rotating Dynamic Content (7-day daily login streak calendar, live seasonal events with 2x XP and holo foil buffs, rotating daily flash deal vault, dedicated Events Hub)
 - ✅ **Phase 12**: Trading System & Direct Peer-to-Peer Offers (Player search, 4-step create wizard, offer/request cards, atomic card swap on accept, 48h expiry, decline & cancel flows, Trading Hub with incoming/sent tabs)
 - ✅ **Phase 13**: Leaderboards & Social Rankings (Global Hall of Fame rankings for Richest, Master Collectors, Grand Traders, Level & Prestige, Top 3 podiums, personal rank tracker, public profile with showcase vault, and player follow/unfollow system)
-- ⏳ **Phase 14**: Coming Soon
+- ✅ **Phase 14**: Cosmetics, Sleeves & Binder Customization (Custom card sleeves, atmospheric binder themes, tournament playmats, glowing avatar frames, prestige titles, interactive dressing room stage with card flip preview, and collection/profile styling integration)
+- ⏳ **Phase 15**: Coming Soon
 
 

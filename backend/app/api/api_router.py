@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import health, auth, cards, packs, missions, market, events, trades, leaderboard, social
+from app.api.v1 import health, auth, cards, packs, missions, market, events, trades, leaderboard, social, cosmetics
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["Health"])
@@ -12,5 +12,6 @@ api_router.include_router(events.router, prefix="/events", tags=["Events & Daily
 api_router.include_router(trades.router, prefix="/trades", tags=["Trading System"])
 api_router.include_router(leaderboard.router, prefix="/leaderboard", tags=["Leaderboard"])
 api_router.include_router(social.router, prefix="/social", tags=["Social"])
+api_router.include_router(cosmetics.router, prefix="/cosmetics", tags=["Cosmetics & Customization"])
 
 

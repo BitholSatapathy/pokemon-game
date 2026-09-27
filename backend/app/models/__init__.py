@@ -7,6 +7,7 @@ from app.models.marketplace import MarketListing
 from app.models.event import UserStreak, GameEvent, FlashDeal, UserFlashDealPurchase
 from app.models.trade import TradeOffer, TradeOfferItem
 from app.models.social import Follow
+from app.models.cosmetic import CosmeticItem, UserCosmetic, UserEquippedCosmetics
 
 __all__ = [
     "User",
@@ -27,6 +28,9 @@ __all__ = [
     "TradeOffer",
     "TradeOfferItem",
     "Follow",
+    "CosmeticItem",
+    "UserCosmetic",
+    "UserEquippedCosmetics",
 ]
 
 

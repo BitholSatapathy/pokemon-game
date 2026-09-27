@@ -19,8 +19,10 @@ import {
   unfollowUser,
   fetchFollowers,
   fetchFollowing,
+  fetchUserEquippedCosmetics,
   PublicProfile,
   SocialUserBasic,
+  EquippedCosmetics,
 } from '../services/api';
 
 export const PublicProfilePage: React.FC = () => {
@@ -35,12 +37,18 @@ export const PublicProfilePage: React.FC = () => {
   const [socialList, setSocialList] = useState<SocialUserBasic[]>([]);
   const [listLoading, setListLoading] = useState<boolean>(false);
 
+  const [equippedCosmetics, setEquippedCosmetics] = useState<EquippedCosmetics | null>(null);
+
   const loadProfile = useCallback(async () => {
     if (!username) return;
     setLoading(true);
     try {
-      const data = await fetchPublicProfile(username, token || undefined);
+      const [data, eqData] = await Promise.all([
+        fetchPublicProfile(username, token || undefined),
+        fetchUserEquippedCosmetics(username).catch(() => null),
+      ]);
       setProfile(data);
+      if (eqData) setEquippedCosmetics(eqData);
     } catch (err) {
       console.error('Failed to load profile:', err);
       setProfile(null);
@@ -162,7 +170,7 @@ export const PublicProfilePage: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-left">
           {/* Avatar with Level Ring */}
           <div className="relative group">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-2 border-purple-400/80 shadow-glow-purple bg-black/60">
+            <div className={`w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden bg-black/60 transition-all duration-300 ${equippedCosmetics?.avatar_frame?.asset_data || 'border-2 border-purple-400/80 shadow-glow-purple'}`}>
               <img
                 src={profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'}
                 alt={profile.username}
@@ -188,6 +196,11 @@ export const PublicProfilePage: React.FC = () => {
                     </span>
                   )}
                 </div>
+                {equippedCosmetics?.title && (
+                  <div className={`text-xs font-mono uppercase tracking-widest mt-1 ${equippedCosmetics.title.asset_data || 'text-purple-300'}`}>
+                    {equippedCosmetics.title.name}
+                  </div>
+                )}
                 <div className="flex items-center justify-center md:justify-start gap-4 text-xs text-gray-400 font-mono mt-1">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-purple-400" /> Joined {memberDate}

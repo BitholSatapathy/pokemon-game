@@ -10,7 +10,8 @@ from app.models import (
     User, Series, CardSet, Card, Pack, PlayerPack, Transaction,
     UserCard, Mission, UserMission, MarketListing,
     UserStreak, GameEvent, FlashDeal, UserFlashDealPurchase,
-    TradeOffer, TradeOfferItem, Follow
+    TradeOffer, TradeOfferItem, Follow,
+    CosmeticItem, UserCosmetic, UserEquippedCosmetics
 )
 from app.services.missions_service import ensure_default_missions
 

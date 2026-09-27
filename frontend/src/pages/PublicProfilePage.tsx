@@ -11,6 +11,7 @@ import {
   Award,
   ChevronLeft,
   Users,
+  Store,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -239,6 +240,13 @@ export const PublicProfilePage: React.FC = () => {
                       className="px-4 py-2.5 rounded-xl bg-surface-card hover:bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg"
                     >
                       <ArrowLeftRight className="w-4 h-4 text-cyan-400" /> Trade
+                    </Link>
+
+                    <Link
+                      to={`/shop/${profile.username}`}
+                      className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg"
+                    >
+                      <Store className="w-4 h-4 text-amber-400" /> Visit Stall
                     </Link>
                   </>
                 )}

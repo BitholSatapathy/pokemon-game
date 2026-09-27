@@ -1169,3 +1169,163 @@ export const equipCosmetic = async (
   }
   return res.json();
 };
+
+
+// ============================================================
+// PHASE 15 — Player Shops & Custom Storefronts
+// ============================================================
+
+export interface ShopFeaturedCard {
+  id: string;
+  name: string;
+  image_url?: string;
+  rarity: string;
+}
+
+export interface ShopCardItem {
+  id: number;
+  user_card_id: number;
+  card_id: string;
+  name: string;
+  image_url?: string;
+  rarity: string;
+  is_foil: boolean;
+  price_coins: number;
+  listed_at: string;
+}
+
+export interface PlayerShop {
+  id: number;
+  user_id: number;
+  owner_username: string;
+  owner_avatar_url?: string;
+  owner_level: number;
+  shop_name: string;
+  slogan?: string;
+  banner_url?: string;
+  featured_card?: ShopFeaturedCard;
+  likes_count: number;
+  visits_count: number;
+  is_open: boolean;
+  item_count: number;
+  is_liked_by_me: boolean;
+  items: ShopCardItem[];
+  created_at: string;
+}
+
+export interface ShopSetupPayload {
+  shop_name: string;
+  slogan?: string;
+  banner_url?: string;
+  featured_card_id?: string;
+  is_open: boolean;
+}
+
+export interface StockCardPayload {
+  user_card_id: number;
+  price_coins: number;
+}
+
+export const fetchPlayerShops = async (
+  sortBy: 'popular' | 'newest' | 'visited' = 'popular',
+  token?: string,
+): Promise<PlayerShop[]> => {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/shops/browse?sort_by=${sortBy}`, { headers });
+  if (!res.ok) throw new Error('Failed to fetch player shops');
+  return res.json();
+};
+
+export const fetchMyShop = async (token: string): Promise<PlayerShop | null> => {
+  const res = await fetch(`${API_BASE}/shops/mine`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null;
+  return res.json();
+};
+
+export const setupMyShop = async (
+  token: string,
+  payload: ShopSetupPayload,
+): Promise<PlayerShop> => {
+  const res = await fetch(`${API_BASE}/shops/setup`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update shop');
+  }
+  return res.json();
+};
+
+export const stockCardInShop = async (
+  token: string,
+  payload: StockCardPayload,
+): Promise<ShopCardItem> => {
+  const res = await fetch(`${API_BASE}/shops/stock`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to stock card in shop');
+  }
+  return res.json();
+};
+
+export const unstockCardFromShop = async (token: string, itemId: number): Promise<any> => {
+  const res = await fetch(`${API_BASE}/shops/stock/${itemId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to unstock card');
+  return res.json();
+};
+
+export const fetchPlayerShop = async (username: string, token?: string): Promise<PlayerShop> => {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/shops/view/${encodeURIComponent(username)}`, { headers });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to view shop');
+  }
+  return res.json();
+};
+
+export const toggleUpvoteShop = async (
+  token: string,
+  username: string,
+): Promise<{ likes_count: number; is_liked: boolean }> => {
+  const res = await fetch(`${API_BASE}/shops/upvote/${encodeURIComponent(username)}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to upvote shop');
+  }
+  return res.json();
+};
+
+export const buyFromPlayerShop = async (token: string, itemId: number): Promise<any> => {
+  const res = await fetch(`${API_BASE}/shops/buy/${itemId}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to purchase card from shop');
+  }
+  return res.json();
+};

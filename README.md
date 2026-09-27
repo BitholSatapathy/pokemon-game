@@ -111,6 +111,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 12**: Trading System & Direct Peer-to-Peer Offers (Player search, 4-step create wizard, offer/request cards, atomic card swap on accept, 48h expiry, decline & cancel flows, Trading Hub with incoming/sent tabs)
 - ✅ **Phase 13**: Leaderboards & Social Rankings (Global Hall of Fame rankings for Richest, Master Collectors, Grand Traders, Level & Prestige, Top 3 podiums, personal rank tracker, public profile with showcase vault, and player follow/unfollow system)
 - ✅ **Phase 14**: Cosmetics, Sleeves & Binder Customization (Custom card sleeves, atmospheric binder themes, tournament playmats, glowing avatar frames, prestige titles, interactive dressing room stage with card flip preview, and collection/profile styling integration)
-- ⏳ **Phase 15**: Coming Soon
+- ✅ **Phase 15**: Player Shops & Custom Storefronts (Personalized collector stalls in the Nexus Bazaar, custom banners and slogans, center stage card pedestal, shop visit tracking, community upvotes/likes, inventory stocking, and 1-click storefront buying)
+- ⏳ **Phase 16**: Coming Soon
 
 

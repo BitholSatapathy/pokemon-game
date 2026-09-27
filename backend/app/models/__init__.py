@@ -8,6 +8,7 @@ from app.models.event import UserStreak, GameEvent, FlashDeal, UserFlashDealPurc
 from app.models.trade import TradeOffer, TradeOfferItem
 from app.models.social import Follow
 from app.models.cosmetic import CosmeticItem, UserCosmetic, UserEquippedCosmetics
+from app.models.player_shop import PlayerShop, PlayerShopItem, ShopUpvote
 
 __all__ = [
     "User",
@@ -31,6 +32,9 @@ __all__ = [
     "CosmeticItem",
     "UserCosmetic",
     "UserEquippedCosmetics",
+    "PlayerShop",
+    "PlayerShopItem",
+    "ShopUpvote",
 ]
 
 

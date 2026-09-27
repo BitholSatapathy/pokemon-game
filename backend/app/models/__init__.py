@@ -5,6 +5,7 @@ from app.models.user_card import UserCard
 from app.models.mission import Mission, UserMission
 from app.models.marketplace import MarketListing
 from app.models.event import UserStreak, GameEvent, FlashDeal, UserFlashDealPurchase
+from app.models.trade import TradeOffer, TradeOfferItem
 
 __all__ = [
     "User",
@@ -22,6 +23,8 @@ __all__ = [
     "GameEvent",
     "FlashDeal",
     "UserFlashDealPurchase",
+    "TradeOffer",
+    "TradeOfferItem",
 ]
 
 

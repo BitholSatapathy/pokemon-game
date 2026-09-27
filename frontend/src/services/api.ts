@@ -807,3 +807,134 @@ export const purchaseDailyFlashDeal = async (token: string): Promise<ApiPurchase
   }
   return data;
 };
+
+
+// ============================================================
+// PHASE 12 — Trading System
+// ============================================================
+
+export type TradeStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED';
+export type TradeSide = 'offer' | 'request';
+
+export interface TradeItemIn {
+  user_card_id: number;
+  quantity: number;
+}
+
+export interface TradeItemOut {
+  id: number;
+  side: TradeSide;
+  user_card_id: number | null;
+  card_name: string | null;
+  card_image: string | null;
+  quantity: number;
+}
+
+export interface TradeUserOut {
+  id: number;
+  username: string;
+}
+
+export interface TradeOfferOut {
+  id: number;
+  sender: TradeUserOut;
+  receiver: TradeUserOut;
+  status: TradeStatus;
+  message: string | null;
+  created_at: string;
+  expires_at: string;
+  items: TradeItemOut[];
+}
+
+export interface CreateTradeOfferPayload {
+  receiver_username: string;
+  message?: string;
+  offer_items: TradeItemIn[];
+  request_items: TradeItemIn[];
+}
+
+export interface PlayerSearchResult {
+  id: number;
+  username: string;
+}
+
+// --- API functions ---
+
+export const fetchReceivedTradeOffers = async (token: string): Promise<TradeOfferOut[]> => {
+  const res = await fetch(`${API_BASE}/trades/offers/received`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch received offers');
+  return res.json();
+};
+
+export const fetchSentTradeOffers = async (token: string): Promise<TradeOfferOut[]> => {
+  const res = await fetch(`${API_BASE}/trades/offers/sent`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch sent offers');
+  return res.json();
+};
+
+export const createTradeOffer = async (
+  token: string,
+  payload: CreateTradeOfferPayload,
+): Promise<TradeOfferOut> => {
+  const res = await fetch(`${API_BASE}/trades/offers`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create trade offer');
+  }
+  return res.json();
+};
+
+export const acceptTradeOffer = async (token: string, offerId: number): Promise<TradeOfferOut> => {
+  const res = await fetch(`${API_BASE}/trades/offers/${offerId}/accept`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to accept trade offer');
+  }
+  return res.json();
+};
+
+export const declineTradeOffer = async (token: string, offerId: number): Promise<TradeOfferOut> => {
+  const res = await fetch(`${API_BASE}/trades/offers/${offerId}/decline`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to decline offer');
+  }
+  return res.json();
+};
+
+export const cancelTradeOffer = async (token: string, offerId: number): Promise<TradeOfferOut> => {
+  const res = await fetch(`${API_BASE}/trades/offers/${offerId}/cancel`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to cancel offer');
+  }
+  return res.json();
+};
+
+export const searchPlayers = async (
+  token: string,
+  query: string,
+): Promise<PlayerSearchResult[]> => {
+  const res = await fetch(`${API_BASE}/trades/users/search?q=${encodeURIComponent(query)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return [];
+  return res.json();
+};

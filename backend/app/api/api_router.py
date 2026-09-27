@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import health, auth, cards, packs, missions, market, events
+from app.api.v1 import health, auth, cards, packs, missions, market, events, trades
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["Health"])
@@ -9,5 +9,6 @@ api_router.include_router(packs.router)
 api_router.include_router(missions.router)
 api_router.include_router(market.router)
 api_router.include_router(events.router, prefix="/events", tags=["Events & Daily Systems"])
+api_router.include_router(trades.router, prefix="/trades", tags=["Trading System"])
 
 

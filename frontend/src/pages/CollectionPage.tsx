@@ -243,6 +243,16 @@ export const CollectionPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link to="/grading">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-emerald-500/50 hover:bg-emerald-950/40 text-emerald-400"
+              leftIcon={<Sparkles className="w-4 h-4 text-emerald-400" />}
+            >
+              Grade Cards (NGS)
+            </Button>
+          </Link>
           <Button
             size="sm"
             variant="outline"

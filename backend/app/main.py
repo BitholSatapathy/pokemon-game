@@ -12,7 +12,8 @@ from app.models import (
     UserStreak, GameEvent, FlashDeal, UserFlashDealPurchase,
     TradeOffer, TradeOfferItem, Follow,
     CosmeticItem, UserCosmetic, UserEquippedCosmetics,
-    PlayerShop, PlayerShopItem, ShopUpvote
+    PlayerShop, PlayerShopItem, ShopUpvote,
+    GradedCard
 )
 from app.services.missions_service import ensure_default_missions
 

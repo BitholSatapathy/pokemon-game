@@ -1329,3 +1329,92 @@ export const buyFromPlayerShop = async (token: string, itemId: number): Promise<
   }
   return res.json();
 };
+
+
+// ============================================================
+// PHASE 16 — Card Grading & Appraisal System (NGS)
+// ============================================================
+
+export interface GradedCard {
+  id: number;
+  user_card_id: number;
+  card_id: string;
+  card_name: string;
+  set_name: string;
+  card_number: string;
+  image_url?: string;
+  rarity: string;
+  is_foil: boolean;
+  cert_number: string;
+  grade: number;
+  grade_label: string;
+  sub_centering: number;
+  sub_corners: number;
+  sub_edges: number;
+  sub_surface: number;
+  service_tier: string;
+  value_multiplier: number;
+  graded_price: number;
+  base_price: number;
+  graded_at: string;
+}
+
+export interface GradingSubmitPayload {
+  user_card_id: number;
+  service_tier: 'standard' | 'express';
+}
+
+export interface GradingRateTier {
+  id: string;
+  name: string;
+  price_coins: number;
+  description: string;
+  bonus_luck: number;
+}
+
+export interface GradingRates {
+  tiers: GradingRateTier[];
+  grade_tiers: Record<string, string>;
+}
+
+export const fetchGradingRates = async (): Promise<GradingRates> => {
+  const res = await fetch(`${API_BASE}/grading/rates`);
+  if (!res.ok) throw new Error('Failed to fetch grading rates');
+  return res.json();
+};
+
+export const fetchMyGradedSlabs = async (token: string): Promise<GradedCard[]> => {
+  const res = await fetch(`${API_BASE}/grading/slabs/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch graded slabs');
+  return res.json();
+};
+
+export const submitForGrading = async (
+  token: string,
+  payload: GradingSubmitPayload,
+): Promise<GradedCard> => {
+  const res = await fetch(`${API_BASE}/grading/submit`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to submit card for grading');
+  }
+  return res.json();
+};
+
+export const verifyCertNumber = async (certNumber: string): Promise<GradedCard> => {
+  const res = await fetch(`${API_BASE}/grading/verify/${encodeURIComponent(certNumber)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Certificate not found in NGS registry');
+  }
+  return res.json();
+};

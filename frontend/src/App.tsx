@@ -21,6 +21,7 @@ import { PublicProfilePage } from './pages/PublicProfilePage';
 import { CosmeticsPage } from './pages/CosmeticsPage';
 import { PlayerShopsPage } from './pages/PlayerShopsPage';
 import { ShopFrontPage } from './pages/ShopFrontPage';
+import GradingPage from './pages/GradingPage';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
@@ -75,6 +76,7 @@ const MainLayout: React.FC = () => {
             <Route path="/cosmetics" element={<CosmeticsPage />} />
             <Route path="/shops" element={<PlayerShopsPage />} />
             <Route path="/shop/:username" element={<ShopFrontPage />} />
+            <Route path="/grading" element={<GradingPage />} />
             <Route path="/profile" element={<ProfilePage user={activeUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -57,10 +57,10 @@ export const Sidebar: React.FC = () => {
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full justify-between py-6 px-4">
-      {/* Brand Logo Header */}
-      <div className="space-y-6">
-        <NavLink to="/" className="flex items-center gap-3 px-2 group">
+    <div className="flex flex-col h-full py-5 px-3 min-h-0">
+      {/* Brand Logo Header (Pinned Top) */}
+      <div className="shrink-0 px-2 pb-4">
+        <NavLink to="/" className="flex items-center gap-3 group">
           <div className="relative">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-violet via-purple-500 to-indigo-500 flex items-center justify-center shadow-glow-purple border border-purple-400/50">
               <Sparkles className="w-6 h-6 text-white animate-pulse-slow" />
@@ -75,9 +75,11 @@ export const Sidebar: React.FC = () => {
             </span>
           </div>
         </NavLink>
+      </div>
 
-        {/* Navigation Items */}
-        <nav className="space-y-1.5 pt-2">
+      {/* Navigation Items (Scrollable with Sleek Glowing Slidebar) */}
+      <div className="flex-1 overflow-y-auto sidebar-scrollbar px-1 min-h-0 my-1">
+        <nav className="space-y-1.5 py-1">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -85,7 +87,7 @@ export const Sidebar: React.FC = () => {
               end={item.to === '/'}
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group relative ${
                   isActive
                     ? 'bg-gradient-to-r from-brand-violet to-purple-600 text-white shadow-glow-purple border-l-4 border-l-purple-300'
                     : 'text-gray-400 hover:text-gray-100 hover:bg-surface-light/60'
@@ -93,36 +95,38 @@ export const Sidebar: React.FC = () => {
               }
             >
               <span className="transition-transform group-hover:scale-110">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
         </nav>
       </div>
 
-      {/* Season 1 Event Card (Matches Concept Screenshot Bottom Left) */}
-      <div className="relative rounded-2xl overflow-hidden border border-purple-500/40 p-4 bg-gradient-to-b from-surface-light to-surface/90 shadow-xl group">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-luminosity group-hover:opacity-45 transition-opacity"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=400')`,
-          }}
-        />
-        <div className="relative z-10 space-y-2">
-          <span className="text-[10px] uppercase font-mono tracking-widest text-purple-300 font-bold block">
-            SEASON 1
-          </span>
-          <h4 className="text-sm font-extrabold text-white font-display leading-tight">
-            CELESTIAL HORIZONS
-          </h4>
-          <Link to="/events" onClick={() => setMobileOpen(false)}>
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full text-xs py-1.5 border-purple-500/50 hover:bg-brand-violet hover:border-purple-400 text-purple-200"
-            >
-              VIEW EVENT
-            </Button>
-          </Link>
+      {/* Season 1 Event Card (Pinned Bottom) */}
+      <div className="shrink-0 pt-3 px-1">
+        <div className="relative rounded-2xl overflow-hidden border border-purple-500/40 p-3.5 bg-gradient-to-b from-surface-light to-surface/90 shadow-xl group">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-luminosity group-hover:opacity-45 transition-opacity"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=400')`,
+            }}
+          />
+          <div className="relative z-10 space-y-2">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-purple-300 font-bold block">
+              SEASON 1
+            </span>
+            <h4 className="text-sm font-extrabold text-white font-display leading-tight">
+              CELESTIAL HORIZONS
+            </h4>
+            <Link to="/events" onClick={() => setMobileOpen(false)}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full text-xs py-1.5 border-purple-500/50 hover:bg-brand-violet hover:border-purple-400 text-purple-200"
+              >
+                VIEW EVENT
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

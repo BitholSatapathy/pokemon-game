@@ -91,3 +91,27 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #7C3AED;
 }
+
+/* Sidebar Custom Slidebar (Slim, glowing neon-purple) */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: rgba(11, 11, 20, 0.4);
+  border-radius: 9999px;
+  margin: 4px 0;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.5) 0%, rgba(168, 85, 247, 0.8) 100%);
+  border-radius: 9999px;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9333EA 0%, #C084FC 100%);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+}
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.6) rgba(11, 11, 20, 0.4);
+}
+

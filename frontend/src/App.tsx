@@ -28,6 +28,7 @@ import { TournamentsPage } from './pages/TournamentsPage';
 import { BattlePassPage } from './pages/BattlePassPage';
 import { AdminPage } from './pages/AdminPage';
 import { AnnouncementBanner } from './components/layout/AnnouncementBanner';
+import { PwaInstallPrompt } from './components/pwa/PwaInstallPrompt';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
@@ -102,6 +103,9 @@ const MainLayout: React.FC = () => {
 
       {/* Auth Modal (Sign In / Register) */}
       <AuthModal />
+
+      {/* PWA Mobile & Desktop Install Prompt (Phase 20) */}
+      <PwaInstallPrompt />
     </div>
   );
 };

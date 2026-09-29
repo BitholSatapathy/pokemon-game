@@ -13,6 +13,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { HealthIndicator } from './HealthIndicator';
+import { AudioToggle } from '../common/AudioToggle';
 import { UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -165,6 +166,9 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
             <Plus className="w-3 h-3" />
           </button>
         </div>
+
+        {/* Audio Mute/Unmute Toggle */}
+        <AudioToggle />
 
         {/* Backend API Health Status */}
         <div className="hidden xl:block">

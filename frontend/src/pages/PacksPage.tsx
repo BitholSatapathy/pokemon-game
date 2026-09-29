@@ -22,6 +22,7 @@ import {
   ApiPlayerPack,
   ApiPulledCard,
 } from '../services/api';
+import { playPackRipSound, playCardFlipSound, playHoloShineSound } from '../services/sound';
 
 export const PacksPage: React.FC = () => {
   const { user, token, isAuthenticated, updateStats, openAuthModal } = useAuth();
@@ -70,6 +71,7 @@ export const PacksPage: React.FC = () => {
     }
 
     setIsRipping(true);
+    playPackRipSound();
 
     try {
       const result = await openBoosterPack(selectedPack.pack_id, token);
@@ -116,10 +118,12 @@ export const PacksPage: React.FC = () => {
   const handleFlipCard = (index: number) => {
     if (revealedCards[index]) return;
     setRevealedCards((prev) => ({ ...prev, [index]: true }));
+    playCardFlipSound();
 
     const card = currentCards[index];
     if (card) {
       if (card.rarity === 'Rare Holo' || card.rarity === 'Ultra Rare' || card.rarity === 'Secret Rare') {
+        playHoloShineSound();
         showToast(
           `🌟 LEGENDARY PULL! Pulled ${card.name} (${card.rarity}) — Value: ${card.market_price}🪙!`,
           'gold',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Zap, Shield, Swords, ArrowLeftRight, X } from 'lucide-react';
 import { BattleStateOut, sendBattleAction } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { playAttackSound, playCriticalHitSound, playFanfareSound } from '../../services/sound';
 
 interface BattleArenaProps {
   initialState: BattleStateOut;
@@ -22,6 +23,13 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
   const handleAction = async (action: 'attack' | 'special' | 'charge' | 'switch', switchIdx?: number) => {
     if (!token || actionLoading || battle.is_over) return;
     setActionLoading(true);
+
+    if (action === 'attack') {
+      playAttackSound();
+    } else if (action === 'special') {
+      playCriticalHitSound();
+    }
+
     try {
       const nextState = await sendBattleAction(token, battle.battle_id, {
         action,
@@ -29,6 +37,9 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
       });
       setBattle(nextState);
       if (nextState.is_over) {
+        if (nextState.winner === 'player') {
+          playFanfareSound();
+        }
         await refreshUser();
         if (onBattleEnd) onBattleEnd();
       }

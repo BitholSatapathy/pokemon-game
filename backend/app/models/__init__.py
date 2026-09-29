@@ -15,6 +15,7 @@ from app.models.tournament import (
     Tournament, TournamentParticipant, TournamentMatch,
     BattlePassSeason, BattlePassReward, UserBattlePass
 )
+from app.models.admin import AuditLog, SystemAnnouncement, GameMasterSetting
 
 __all__ = [
     "User",
@@ -51,6 +52,9 @@ __all__ = [
     "BattlePassSeason",
     "BattlePassReward",
     "UserBattlePass",
+    "AuditLog",
+    "SystemAnnouncement",
+    "GameMasterSetting",
 ]
 
 

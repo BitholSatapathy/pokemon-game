@@ -16,9 +16,53 @@ from app.models import (
     GradedCard,
     Deck, DeckCard, BattleHistory,
     Tournament, TournamentParticipant, TournamentMatch,
-    BattlePassSeason, BattlePassReward, UserBattlePass
+    BattlePassSeason, BattlePassReward, UserBattlePass,
+    AuditLog, SystemAnnouncement, GameMasterSetting
 )
 from app.services.missions_service import ensure_default_missions
+from sqlalchemy import text
+
+
+def migrate_and_seed_admin():
+    """Ensure newly introduced admin columns and seed data exist."""
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        res = db.execute(text("PRAGMA table_info(users)")).fetchall()
+        cols = [r[1] for r in res]
+        if "is_admin" not in cols:
+            db.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0 NOT NULL"))
+        if "is_banned" not in cols:
+            db.execute(text("ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT 0 NOT NULL"))
+        if "ban_reason" not in cols:
+            db.execute(text("ALTER TABLE users ADD COLUMN ban_reason VARCHAR(255) NULL"))
+        db.commit()
+
+        db.execute(text("UPDATE users SET is_admin = 1 WHERE username IN ('Trainer', 'Bithol')"))
+        db.commit()
+
+        if db.query(SystemAnnouncement).count() == 0:
+            announcement = SystemAnnouncement(
+                title="🏆 Knockout Tournament & Battle Pass Season 1 Live!",
+                message="Compete in the 8-Trainer Knockout Arena and level up your Battle Pass to claim rare Holo Charizard!",
+                banner_type="event",
+                is_active=True
+            )
+            db.add(announcement)
+            db.commit()
+
+        if db.query(GameMasterSetting).filter(GameMasterSetting.key == "xp_multiplier").count() == 0:
+            db.add(GameMasterSetting(
+                key="xp_multiplier",
+                value="1.0",
+                description="Global XP multiplier applied to matches and tournaments"
+            ))
+            db.commit()
+    except Exception as e:
+        print(f"Admin migration warning: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 def seed_default_packs():
@@ -86,6 +130,7 @@ def seed_default_packs():
 async def lifespan(app: FastAPI):
     # Initialize all database tables on startup
     Base.metadata.create_all(bind=engine)
+    migrate_and_seed_admin()
     seed_default_packs()
     db = SessionLocal()
     try:

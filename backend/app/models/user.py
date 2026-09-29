@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from app.core.database import Base
 
 def utc_now():
@@ -24,5 +24,10 @@ class User(Base):
         nullable=False
     )
     
+    # Admin & Moderation Controls (Phase 19)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    is_banned = Column(Boolean, default=False, nullable=False)
+    ban_reason = Column(String(255), nullable=True)
+
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     last_login = Column(DateTime(timezone=True), default=utc_now, nullable=False)

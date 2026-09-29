@@ -19,13 +19,16 @@ import {
   Layers,
   Swords,
   Crown,
+  ShieldAlert,
   X,
   Menu,
 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar: React.FC = () => {
+  const { user } = useAuth();
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -48,6 +51,9 @@ export const Sidebar: React.FC = () => {
     { to: '/leaderboard', label: 'Leaderboard', icon: <Trophy className="w-4 h-4 text-yellow-400" /> },
     { to: '/cosmetics', label: 'Cosmetics', icon: <Palette className="w-4 h-4 text-pink-400" /> },
     { to: '/profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
+    ...(user?.isAdmin
+      ? [{ to: '/admin', label: 'Admin Hub', icon: <ShieldAlert className="w-4 h-4 text-red-400 animate-pulse" /> }]
+      : []),
   ];
 
   const sidebarContent = (

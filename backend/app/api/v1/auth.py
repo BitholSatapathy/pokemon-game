@@ -71,6 +71,12 @@ def login(user_in: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if getattr(user, "is_banned", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Account has been suspended. Reason: {getattr(user, 'ban_reason', None) or 'Violation of community guidelines'}",
+        )
+
     # Update last login timestamp
     user.last_login = datetime.now(timezone.utc)
     db.commit()

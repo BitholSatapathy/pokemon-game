@@ -20,6 +20,9 @@ class UserResponse(BaseModel):
     level: int
     xp: int
     avatar_url: str
+    is_admin: bool = False
+    is_banned: bool = False
+    ban_reason: Optional[str] = None
     created_at: datetime
     last_login: datetime
 

@@ -1,4 +1,7 @@
-import { Card, BoosterPack } from '../types';
+import { 
+  Card, BoosterPack, AdminTelemetry, AdminUser, 
+  AuditLogItem, AntiCheatFlag, SystemAnnouncement 
+} from '../types';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
@@ -1874,3 +1877,220 @@ export const claimBattlePassReward = async (tier: number, isPremium: boolean, to
   }
   return res.json();
 };
+
+/* =========================================================================
+   Phase 19: Admin Panel, Anti-Cheat & Game Master Operations
+========================================================================= */
+
+export const fetchAdminTelemetry = async (token: string): Promise<AdminTelemetry> => {
+  const res = await fetch(`${API_BASE}/admin/telemetry`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch platform telemetry');
+  }
+  return res.json();
+};
+
+export const fetchAdminUsers = async (
+  token: string,
+  search?: string,
+  bannedOnly: boolean = false,
+  page: number = 1,
+  limit: number = 20
+): Promise<{ total: number; page: number; limit: number; users: AdminUser[] }> => {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (bannedOnly) params.append('banned_only', 'true');
+  params.append('page', String(page));
+  params.append('limit', String(limit));
+
+  const res = await fetch(`${API_BASE}/admin/users?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch user list');
+  }
+  return res.json();
+};
+
+export const fetchAdminUserDetails = async (userId: number, token: string): Promise<AdminUser> => {
+  const res = await fetch(`${API_BASE}/admin/users/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch user details');
+  }
+  return res.json();
+};
+
+export const banAdminUser = async (
+  userId: number,
+  reason: string,
+  token: string
+): Promise<{ message: string; user_id: number; reason: string }> => {
+  const res = await fetch(`${API_BASE}/admin/users/${userId}/ban`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to suspend user');
+  }
+  return res.json();
+};
+
+export const unbanAdminUser = async (
+  userId: number,
+  token: string
+): Promise<{ message: string; user_id: number }> => {
+  const res = await fetch(`${API_BASE}/admin/users/${userId}/unban`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to reinstate user');
+  }
+  return res.json();
+};
+
+export const grantAdminResources = async (
+  userId: number,
+  data: {
+    coins?: number;
+    gems?: number;
+    pack_id?: string;
+    pack_quantity?: number;
+    card_id?: string;
+    is_foil?: boolean;
+  },
+  token: string
+): Promise<{ message: string; new_coins: number; new_gems: number }> => {
+  const res = await fetch(`${API_BASE}/admin/users/${userId}/grant`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to grant resources');
+  }
+  return res.json();
+};
+
+export const fetchAdminAuditLogs = async (
+  token: string,
+  severity?: string,
+  limit: number = 50
+): Promise<AuditLogItem[]> => {
+  const params = new URLSearchParams();
+  if (severity) params.append('severity', severity);
+  params.append('limit', String(limit));
+
+  const res = await fetch(`${API_BASE}/admin/logs?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch audit logs');
+  }
+  return res.json();
+};
+
+export const fetchAdminAntiCheatFlags = async (token: string): Promise<AntiCheatFlag[]> => {
+  const res = await fetch(`${API_BASE}/admin/anti-cheat/flags`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch anti-cheat flags');
+  }
+  return res.json();
+};
+
+export const fetchAdminAnnouncements = async (token: string): Promise<SystemAnnouncement[]> => {
+  const res = await fetch(`${API_BASE}/admin/announcements`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch announcements');
+  }
+  return res.json();
+};
+
+export const createAdminAnnouncement = async (
+  data: {
+    title: string;
+    message: string;
+    banner_type: string;
+    is_active: boolean;
+  },
+  token: string
+): Promise<SystemAnnouncement> => {
+  const res = await fetch(`${API_BASE}/admin/announcements`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create broadcast announcement');
+  }
+  return res.json();
+};
+
+export const deleteAdminAnnouncement = async (
+  id: number,
+  token: string
+): Promise<{ message: string }> => {
+  const res = await fetch(`${API_BASE}/admin/announcements/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to delete announcement');
+  }
+  return res.json();
+};
+
+export const setAdminXpMultiplier = async (
+  multiplier: number,
+  token: string
+): Promise<{ message: string; multiplier: number }> => {
+  const res = await fetch(`${API_BASE}/admin/gm/xp-multiplier`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ multiplier }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to set XP multiplier');
+  }
+  return res.json();
+};
+
+export const fetchActiveAnnouncements = async (): Promise<SystemAnnouncement[]> => {
+  const res = await fetch(`${API_BASE}/announcements/active`);
+  if (!res.ok) return [];
+  return res.json();
+};
+

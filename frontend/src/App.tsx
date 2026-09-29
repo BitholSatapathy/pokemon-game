@@ -26,6 +26,8 @@ import DecksPage from './pages/DecksPage';
 import BattlePage from './pages/BattlePage';
 import { TournamentsPage } from './pages/TournamentsPage';
 import { BattlePassPage } from './pages/BattlePassPage';
+import { AdminPage } from './pages/AdminPage';
+import { AnnouncementBanner } from './components/layout/AnnouncementBanner';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
@@ -59,6 +61,9 @@ const MainLayout: React.FC = () => {
 
       {/* Main App Container */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Global Broadcast Announcement Banner */}
+        <AnnouncementBanner />
+
         {/* Top Bar with Search, Currencies, and Profile */}
         <TopBar user={activeUser} setUser={handleSetUser} />
 
@@ -85,6 +90,7 @@ const MainLayout: React.FC = () => {
             <Route path="/battle" element={<BattlePage />} />
             <Route path="/tournaments" element={<TournamentsPage />} />
             <Route path="/battle-pass" element={<BattlePassPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/profile" element={<ProfilePage user={activeUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

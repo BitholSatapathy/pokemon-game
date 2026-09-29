@@ -77,6 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               maxCards: 240,
               binderCompletionRate: 42,
               avatarUrl: data.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+              isAdmin: Boolean(data.is_admin),
+              isBanned: Boolean(data.is_banned),
+              banReason: data.ban_reason,
             });
           }
         } else {
@@ -133,6 +136,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         maxCards: 240,
         binderCompletionRate: 42,
         avatarUrl: u.avatar_url,
+        isAdmin: Boolean(u.is_admin),
+        isBanned: Boolean(u.is_banned),
+        banReason: u.ban_reason,
       });
 
       showToast(`Welcome back, Trainer ${u.username}!`, 'success', 'Signed In');
@@ -179,6 +185,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         maxCards: 240,
         binderCompletionRate: 0,
         avatarUrl: u.avatar_url,
+        isAdmin: Boolean(u.is_admin),
+        isBanned: Boolean(u.is_banned),
+        banReason: u.ban_reason,
       });
 
       showToast(
@@ -224,6 +233,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           maxCards: 240,
           binderCompletionRate: prev?.binderCompletionRate ?? 0,
           avatarUrl: data.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          isAdmin: Boolean(data.is_admin),
+          isBanned: Boolean(data.is_banned),
+          banReason: data.ban_reason,
         }));
       }
     } catch {

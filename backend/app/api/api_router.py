@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     health, auth, cards, packs, missions, market, events, 
     trades, leaderboard, social, cosmetics, player_shops, grading,
-    decks, battle, tournaments, battle_pass
+    decks, battle, tournaments, battle_pass, admin
 )
 
 api_router = APIRouter()
@@ -23,6 +23,8 @@ api_router.include_router(decks.router, prefix="/decks", tags=["Deck Builder"])
 api_router.include_router(battle.router, prefix="/battle", tags=["Battle Arena & Gym Leaders"])
 api_router.include_router(tournaments.router, prefix="/tournaments", tags=["Tournaments & Knockout Arena"])
 api_router.include_router(battle_pass.router, prefix="/battle-pass", tags=["Battle Pass Season 1"])
+api_router.include_router(admin.router)
+api_router.include_router(admin.public_announcements_router)
 
 
 

@@ -36,7 +36,24 @@ def get_current_user(
     if user is None:
         raise credentials_exception
 
+    if getattr(user, "is_banned", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Account has been suspended. Reason: {getattr(user, 'ban_reason', None) or 'Violation of terms'}"
+        )
+
     return user
+
+
+def get_current_admin_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin and Game Master privileges required."
+        )
+    return current_user
 
 
 def get_optional_current_user(
@@ -53,7 +70,10 @@ def get_optional_current_user(
         return None
     try:
         user_id = int(user_id_str)
-        return db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and getattr(user, "is_banned", False):
+            return None
+        return user
     except Exception:
         return None
 

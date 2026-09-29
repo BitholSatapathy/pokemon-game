@@ -44,6 +44,9 @@ export interface UserProfile {
   maxCards: number;
   binderCompletionRate: number;
   avatarUrl: string;
+  isAdmin?: boolean;
+  isBanned?: boolean;
+  banReason?: string;
 }
 
 export interface DailyMission {
@@ -95,4 +98,72 @@ export interface BackendHealth {
   version?: string;
   database?: string;
   timestamp?: string;
+}
+
+export interface AdminTelemetry {
+  total_users: number;
+  banned_users: number;
+  admin_users: number;
+  total_coins: number;
+  total_gems: number;
+  total_cards_owned: number;
+  total_graded_cards: number;
+  total_packs_opened: number;
+  active_market_listings: number;
+  total_market_volume_coins: number;
+  total_tournaments: number;
+  xp_multiplier: number;
+  system_status: string;
+  server_uptime: string;
+}
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  coins: number;
+  gems: number;
+  level: number;
+  xp: number;
+  avatar_url: string;
+  is_admin: boolean;
+  is_banned: boolean;
+  ban_reason?: string | null;
+  created_at: string;
+  last_login: string;
+  cards_count: number;
+  packs_count: number;
+  decks_count: number;
+}
+
+export interface AuditLogItem {
+  id: number;
+  user_id?: number | null;
+  actor_username: string;
+  action: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  details: string;
+  created_at: string;
+}
+
+export interface AntiCheatFlag {
+  id: string;
+  user_id: number;
+  username: string;
+  flag_type: string;
+  severity: 'CRITICAL' | 'WARNING' | 'INFO';
+  description: string;
+  metric_value: string;
+  recommended_action: string;
+  timestamp: string;
+}
+
+export interface SystemAnnouncement {
+  id: number;
+  title: string;
+  message: string;
+  banner_type: 'info' | 'warning' | 'success' | 'event';
+  is_active: boolean;
+  created_at: string;
+  expires_at?: string | null;
 }

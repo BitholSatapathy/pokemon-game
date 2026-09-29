@@ -112,8 +112,17 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the complete 27-phase vibe-coding pro
 - ✅ **Phase 13**: Leaderboards & Social Rankings (Global Hall of Fame rankings for Richest, Master Collectors, Grand Traders, Level & Prestige, Top 3 podiums, personal rank tracker, public profile with showcase vault, and player follow/unfollow system)
 - ✅ **Phase 14**: Cosmetics, Sleeves & Binder Customization (Custom card sleeves, atmospheric binder themes, tournament playmats, glowing avatar frames, prestige titles, interactive dressing room stage with card flip preview, and collection/profile styling integration)
 - ✅ **Phase 15**: Player Shops & Custom Storefronts (Personalized collector stalls in the Nexus Bazaar, custom banners and slogans, center stage card pedestal, shop visit tracking, community upvotes/likes, inventory stocking, and 1-click storefront buying)
-- ✅ **Phase 16**: Card Grading & Appraisal System (Nexus Grading Service - NGS: 4-point diagnostic evaluation for Centering, Corners, Edges, Surface; 1.0–10.0 grades including Gem Mint & Pristine; tamper-proof acrylic slab encapsulation; authentic cert verification registry; and up to 5x value multipliers)
-- ✅ **Phase 17**: Deck Builder & TCG Battle Engine (Turn-based stadium duels against Kanto Gym Leaders Brock, Misty, Lt. Surge, and Giovanni; custom squad builder with elemental type synergy & average HP analysis; interactive combat with attacks, elemental weaknesses, special moves, energy charging, bench swapping, and authentic Gym Badges)
-- ⏳ **Phase 18**: Coming Soon (Guilds, Clubs & Clan Vaults)
+- ✅ **Phase 18**: Multiplayer Tournaments, Spectator Mode & Battle Pass Season 1 (8-player single-elimination knockout tournament engine, AI rival duelists Lance, Blue, Cynthia, Steven; spectator match combat log replays; 30-tier dual-track Free & Premium Battle Pass with 500 Gem unlock & tier claiming)
+- ✅ **Phase 19**: Admin Panel, Anti-Cheat Engine & Game Master Operations (Game Master command room, telemetry & circulating economy metrics, user moderation & account suspension/reinstatement, live item spawner, real-time heuristic anti-cheat scanner, server-wide broadcast alerts, global XP multiplier toggle)
+- ✅ **Phase 20**: Performance, PWA Mobile Optimization & Global Polish (PWA manifest, offline Service Worker caching, procedural Web Audio API synthesizer for pack opening, card flips & battle combat, tactile mobile haptics, Rollup manual chunk code-splitting, and edge-to-edge mobile optimization)
+
+---
+
+## 🎮 Default Credentials for Testing
+- **Username**: `Trainer`
+- **Password**: `Password123!`
+- **Role**: Administrator / Game Master (Full access to `/admin` Command Center)
+- **Starting Assets**: ~50,000 Coins, ~1,000 Gems, 20 Unopened Booster Packs, Active Deck: "Champion Squad"
+
 
 

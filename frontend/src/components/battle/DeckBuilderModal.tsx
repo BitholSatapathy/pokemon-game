@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, Search, Plus, Minus, Layers, AlertCircle, 
+  X, Plus, Minus, Layers, AlertCircle, 
   Save, RefreshCw 
 } from 'lucide-react';
 import { 
   fetchMyCollection, createDeck, updateDeck, 
   ApiUserCard, DeckOut, DeckCardItemIn 
 } from '../../services/api';
+import { SearchAutocomplete } from '../common/SearchAutocomplete';
 import { useAuth } from '../../context/AuthContext';
 
 interface DeckBuilderModalProps {
@@ -178,13 +179,14 @@ export const DeckBuilderModal: React.FC<DeckBuilderModalProps> = ({
           <div className="lg:col-span-7 flex flex-col space-y-3 overflow-hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
-                <input
-                  type="text"
+                <SearchAutocomplete
                   placeholder="Search cards by name or element..."
+                  category="cards"
                   value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  autoNavigate={false}
+                  onChange={(val) => setSearchFilter(val)}
+                  onSelect={(item) => setSearchFilter(item.title)}
+                  className="w-full text-xs"
                 />
               </div>
               <span className="text-xs font-mono text-slate-400 bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">

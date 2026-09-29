@@ -8,7 +8,6 @@ import {
   PackageOpen,
   Store,
   Layers,
-  Search,
   UserX,
   UserCheck,
   Gift,
@@ -19,6 +18,9 @@ import {
   Send,
   Trash2,
   X,
+  Flame,
+  Sparkles,
+  Crown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -34,7 +36,10 @@ import {
   createAdminAnnouncement,
   deleteAdminAnnouncement,
   setAdminXpMultiplier,
+  triggerAdminAbuse,
 } from '../services/api';
+import { SearchAutocomplete } from '../components/common/SearchAutocomplete';
+import { playFanfareSound, playCoinClinkSound, playClickSound } from '../services/sound';
 import {
   AdminTelemetry,
   AdminUser,
@@ -47,7 +52,9 @@ export const AdminPage: React.FC = () => {
   const { user, token, openAuthModal } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'anticheat' | 'broadcast'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'moderation' | 'anticheat' | 'broadcast' | 'chaos'>('overview');
+  const [triggeringAction, setTriggeringAction] = useState<string | null>(null);
+  const [godLuckActive, setGodLuckActive] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   // Telemetry
@@ -235,6 +242,36 @@ export const AdminPage: React.FC = () => {
     }
   };
 
+  // Handle Admin Abuse & Chaos Events
+  const handleTriggerAbuse = async (
+    action: 'coin-rain' | 'gem-eruption' | 'godmode-self' | 'shiny-surge' | 'force-shop-reroll' | 'mass-pack-drop',
+    actionTitle: string
+  ) => {
+    if (!token) return;
+    setTriggeringAction(action);
+    try {
+      const res = await triggerAdminAbuse(action, token);
+      if (action === 'coin-rain' || action === 'gem-eruption') {
+        playCoinClinkSound();
+      } else if (action === 'godmode-self') {
+        playFanfareSound();
+      } else {
+        playClickSound();
+      }
+
+      if (action === 'shiny-surge') {
+        setGodLuckActive(res.status === 'ENABLED');
+      }
+
+      showToast(res.message, 'gold', `⚡ Admin Command: ${actionTitle}`);
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || `Failed to execute ${actionTitle}`, 'error', 'Command Failed');
+    } finally {
+      setTriggeringAction(null);
+    }
+  };
+
   // Access Denied Screen
   if (!user || !user.isAdmin) {
     return (
@@ -303,6 +340,7 @@ export const AdminPage: React.FC = () => {
             { id: 'moderation', label: `Trainers (${usersTotal})`, icon: <Users className="w-4 h-4" /> },
             { id: 'anticheat', label: `Anti-Cheat & Security (${antiCheatFlags.length})`, icon: <ShieldAlert className="w-4 h-4 text-amber-400" /> },
             { id: 'broadcast', label: 'Broadcasts & Live Ops', icon: <Radio className="w-4 h-4 text-cyan-400" /> },
+            { id: 'chaos', label: '⚡ God Mode & Chaos Events', icon: <Flame className="w-4 h-4 text-amber-400 animate-pulse" /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -469,16 +507,20 @@ export const AdminPage: React.FC = () => {
           {/* Controls Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-surface-dark border border-slate-800">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                type="text"
+              <SearchAutocomplete
                 placeholder="Search username or email..."
+                category="users"
                 value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  handleUserFilter(e.target.value, bannedOnly);
+                autoNavigate={false}
+                onChange={(val) => {
+                  setUserSearch(val);
+                  handleUserFilter(val, bannedOnly);
                 }}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                onSelect={(item) => {
+                  setUserSearch(item.title);
+                  handleUserFilter(item.title, bannedOnly);
+                }}
+                className="w-full text-xs"
               />
             </div>
 
@@ -821,6 +863,264 @@ export const AdminPage: React.FC = () => {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: GOD MODE & ADMIN ABUSE ENGINE */}
+      {activeTab === 'chaos' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Chaos Engine Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-950/50 via-purple-950/60 to-indigo-950/50 border border-purple-500/40 p-6 sm:p-8 shadow-2xl">
+            <div className="absolute -top-12 -right-12 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-mono font-bold tracking-wider flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    ADMIN ABUSE ENGINE
+                  </span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider flex items-center gap-1.5 border ${
+                    godLuckActive 
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse'
+                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                  }`}>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {godLuckActive ? '100% SHINY SUPERNOVA ACTIVE' : 'LUCK RNG STANDARD'}
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white font-display uppercase tracking-tight flex items-center gap-2.5">
+                  <span>OMNIPOTENT GAME MASTER VAULT</span>
+                </h2>
+                <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                  Execute server-wide economic events, inject infinite riches, manipulate RNG booster pull algorithms, or force instantaneous shop rerolls for all trainers on the server.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={loadData}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-purple-500/30 text-purple-200 text-xs font-bold transition-all shadow-md"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh Server State
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Action 1: Coin Rain */}
+            <div className="rounded-3xl bg-gradient-to-b from-amber-950/30 via-slate-900 to-slate-900 border border-amber-500/30 p-6 flex flex-col justify-between space-y-5 hover:border-amber-400/50 transition-all shadow-lg hover:shadow-glow-amber">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shadow-inner">
+                    <Coins className="w-6 h-6 animate-bounce" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono font-bold">
+                    +25,000 COINS / ALL
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white font-display tracking-wide">
+                    🌧️ Global Coin Rain
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Triggers a torrential golden shower across the server. Instantly credits <span className="text-amber-300 font-bold">+25,000 Coins</span> into every registered player's account.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleTriggerAbuse('coin-rain', 'Global Coin Rain (+25k to All)')}
+                disabled={triggeringAction === 'coin-rain'}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {triggeringAction === 'coin-rain' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Coins className="w-4 h-4" />
+                )}
+                <span>Trigger Coin Rain</span>
+              </button>
+            </div>
+
+            {/* Action 2: Gem Volcano */}
+            <div className="rounded-3xl bg-gradient-to-b from-pink-950/30 via-slate-900 to-slate-900 border border-pink-500/30 p-6 flex flex-col justify-between space-y-5 hover:border-pink-400/50 transition-all shadow-lg hover:shadow-glow-pink">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-pink-300 shadow-inner">
+                    <Gem className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-300 text-[10px] font-mono font-bold">
+                    +250 GEMS / ALL
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white font-display tracking-wide">
+                    💎 Gem Volcano Eruption
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Detonates the mythical crystalline volcano. Grants <span className="text-pink-300 font-bold">+250 Rare Gems</span> to every player in the server database immediately.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleTriggerAbuse('gem-eruption', 'Gem Volcano Eruption (+250 Gems to All)')}
+                disabled={triggeringAction === 'gem-eruption'}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {triggeringAction === 'gem-eruption' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Gem className="w-4 h-4" />
+                )}
+                <span>Erupt Gem Volcano</span>
+              </button>
+            </div>
+
+            {/* Action 3: Ascended Godmode Self */}
+            <div className="rounded-3xl bg-gradient-to-b from-purple-950/40 via-indigo-950/30 to-slate-900 border border-purple-500/40 p-6 flex flex-col justify-between space-y-5 hover:border-purple-400 transition-all shadow-xl hover:shadow-glow-purple">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 border border-purple-400/50 flex items-center justify-center text-white shadow-glow-purple">
+                    <Crown className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-[10px] font-mono font-bold">
+                    SELF ASCENSION
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white font-display tracking-wide">
+                    👑 Ascended Godmode
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Ascend your personal administrator trainer to maximum power: grants <span className="text-amber-300 font-bold">+1,000,000 Coins</span>, <span className="text-pink-300 font-bold">+50,000 Gems</span>, and promotes you directly to <span className="text-purple-300 font-bold">Level 100</span>!
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleTriggerAbuse('godmode-self', 'Godmode Self-Ascension (+1M C, +50k G, Lvl 100)')}
+                disabled={triggeringAction === 'godmode-self'}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-glow-purple active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {triggeringAction === 'godmode-self' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Crown className="w-4 h-4" />
+                )}
+                <span>Ascend to Godmode (Self)</span>
+              </button>
+            </div>
+
+            {/* Action 4: Cosmic Shiny Supernova */}
+            <div className="rounded-3xl bg-gradient-to-b from-cyan-950/30 via-slate-900 to-slate-900 border border-cyan-500/30 p-6 flex flex-col justify-between space-y-5 hover:border-cyan-400/50 transition-all shadow-lg hover:shadow-glow-cyan">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shadow-inner">
+                    <Sparkles className="w-6 h-6 animate-spin" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold">
+                    100% HOLO BOOST
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white font-display tracking-wide">
+                    🌟 Cosmic Shiny Supernova
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Rewrites booster card drop probabilities. While active, every booster pack opened on the platform is guaranteed to deliver an <span className="text-cyan-300 font-bold">Ultra Rare / Secret Rare Holo foil</span> in Slot 10.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleTriggerAbuse('shiny-surge', 'Cosmic Shiny Supernova Toggle')}
+                disabled={triggeringAction === 'shiny-surge'}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {triggeringAction === 'shiny-surge' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                <span>Toggle 100% Holo Supernova</span>
+              </button>
+            </div>
+
+            {/* Action 5: Force Shop Reroll */}
+            <div className="rounded-3xl bg-gradient-to-b from-emerald-950/30 via-slate-900 to-slate-900 border border-emerald-500/30 p-6 flex flex-col justify-between space-y-5 hover:border-emerald-400/50 transition-all shadow-lg">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-inner">
+                    <RefreshCw className="w-6 h-6" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold">
+                    SHOP REFRESH
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white font-display tracking-wide">
+                    🔄 Temporal Shop Fracture
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Shatters the current 4-hour timeline. Forces an instantaneous reroll of the <span className="text-emerald-300 font-bold">Mystery Black Market</span> for all players right now with fresh stock and new discounts.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleTriggerAbuse('force-shop-reroll', 'Instant 4-Hour Black Market Reroll')}
+                disabled={triggeringAction === 'force-shop-reroll'}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {triggeringAction === 'force-shop-reroll' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                <span>Force Shop Reroll Now</span>
+              </button>
+            </div>
+
+            {/* Action 6: Mass Booster Air Drop */}
+            <div className="rounded-3xl bg-gradient-to-b from-indigo-950/30 via-slate-900 to-slate-900 border border-indigo-500/30 p-6 flex flex-col justify-between space-y-5 hover:border-indigo-400/50 transition-all shadow-lg hover:shadow-glow-purple">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shadow-inner">
+                    <Gift className="w-6 h-6 animate-bounce" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[10px] font-mono font-bold">
+                    3x PACKS / USER
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white font-display tracking-wide">
+                    🎁 Celestial Apex Air Drop
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Deploys a server-wide cargo drop. Airdrops <span className="text-indigo-300 font-bold">3x Celestial Horizons Apex Booster Packs</span> directly into the inventory of all registered trainers.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleTriggerAbuse('mass-pack-drop', 'Celestial Apex Booster Air Drop (3x Packs to All)')}
+                disabled={triggeringAction === 'mass-pack-drop'}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-400 hover:to-pink-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {triggeringAction === 'mass-pack-drop' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Gift className="w-4 h-4" />
+                )}
+                <span>Launch Mass Pack Air Drop</span>
+              </button>
             </div>
           </div>
         </div>

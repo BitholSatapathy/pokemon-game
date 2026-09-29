@@ -227,10 +227,14 @@ def open_booster_pack(
             slot_is_foil = (i == 2 and random.random() < reverse_foil_rate)
             pulled_selections.append({"card": c, "is_foil": slot_is_foil})
 
-        # Slot 10: High-Tier Rare Slot (35% + event foil boost for Rare Holo, remainder Regular Rare)
-        holo_rate = min(0.9, 0.35 + foil_boost)
+        from app.models.admin import GameMasterSetting
+        god_luck_setting = db.query(GameMasterSetting).filter(GameMasterSetting.key == "god_luck").first()
+        is_god_luck = bool(god_luck_setting and god_luck_setting.value == "1")
+
+        # Slot 10: High-Tier Rare Slot (35% + event foil boost for Rare Holo, or 100% if Admin God Luck Active)
+        holo_rate = 1.0 if is_god_luck else min(0.9, 0.35 + foil_boost)
         roll = random.random()
-        if roll < holo_rate and holo_rares:
+        if (roll < holo_rate or is_god_luck) and holo_rares:
             selected_rare = random.choice(holo_rares)
             rare_foil = True
         else:
@@ -241,35 +245,38 @@ def open_booster_pack(
         # 5. Persist to player's collection (`user_cards`)
         pulled_responses: List[PulledCardResponse] = []
 
+        cards_cache = {}
         for item in pulled_selections:
             card_obj: Card = item["card"]
             is_foil: bool = item["is_foil"]
+            cache_key = (card_obj.id, is_foil)
 
-            # Query existing ownership
-            user_card = (
-                db.query(UserCard)
-                .filter(
-                    UserCard.user_id == current_user.id,
-                    UserCard.card_id == card_obj.id,
-                    UserCard.is_foil == is_foil
+            if cache_key not in cards_cache:
+                existing = (
+                    db.query(UserCard)
+                    .filter(
+                        UserCard.user_id == current_user.id,
+                        UserCard.card_id == card_obj.id,
+                        UserCard.is_foil == is_foil
+                    )
+                    .first()
                 )
-                .first()
-            )
+                if existing:
+                    cards_cache[cache_key] = (existing, False)
+                else:
+                    new_uc = UserCard(
+                        user_id=current_user.id,
+                        card_id=card_obj.id,
+                        quantity=0,
+                        is_foil=is_foil
+                    )
+                    db.add(new_uc)
+                    cards_cache[cache_key] = (new_uc, True)
 
-            is_new = (user_card is None)
-
-            if user_card:
-                user_card.quantity += 1
-                total_owned = user_card.quantity
-            else:
-                user_card = UserCard(
-                    user_id=current_user.id,
-                    card_id=card_obj.id,
-                    quantity=1,
-                    is_foil=is_foil
-                )
-                db.add(user_card)
-                total_owned = 1
+            user_card, was_brand_new = cards_cache[cache_key]
+            user_card.quantity += 1
+            is_new = was_brand_new and user_card.quantity == 1
+            total_owned = user_card.quantity
 
             pulled_responses.append(
                 PulledCardResponse(

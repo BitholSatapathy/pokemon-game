@@ -9,6 +9,7 @@ import {
   fetchMyGradedSlabs, submitForGrading, verifyCertNumber,
   ApiUserCard, GradedCard, GradingRates
 } from '../services/api';
+import { SearchAutocomplete } from '../components/common/SearchAutocomplete';
 import { useAuth } from '../context/AuthContext';
 import { GradedSlab } from '../components/cards/GradedSlab';
 
@@ -267,13 +268,14 @@ export const GradingPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="relative w-full sm:w-64">
-                      <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
-                      <input
-                        type="text"
+                      <SearchAutocomplete
                         placeholder="Search name, rarity..."
+                        category="cards"
                         value={searchFilter}
-                        onChange={(e) => setSearchFilter(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        autoNavigate={false}
+                        onChange={(val) => setSearchFilter(val)}
+                        onSelect={(item) => setSearchFilter(item.title)}
+                        className="w-full text-xs"
                       />
                     </div>
                   </div>

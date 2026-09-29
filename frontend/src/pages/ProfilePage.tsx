@@ -1,24 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Award,
   Coins,
   Gem,
   PackageCheck,
   Sparkles,
+  Camera,
 } from 'lucide-react';
 import { CardPanel } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { useToast } from '../context/ToastContext';
+import { AvatarPickerModal, DEFAULT_AVATAR } from '../components/common/AvatarPickerModal';
 import { UserProfile } from '../types';
 
 interface ProfileProps {
   user: UserProfile;
+  setUser?: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
-export const ProfilePage: React.FC<ProfileProps> = ({ user }) => {
-  const { showToast } = useToast();
+export const ProfilePage: React.FC<ProfileProps> = ({ user, setUser }) => {
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const xpPercent = Math.min(100, Math.round((user.xp / user.xpToNextLevel) * 100));
+
+  const handleAvatarUpdated = (newUrl: string) => {
+    if (setUser) {
+      setUser((prev) => ({ ...prev, avatarUrl: newUrl }));
+    }
+  };
 
   const achievements = [
     { id: '1', title: 'First Pull', desc: 'Open your first booster pack.', icon: '🏆', unlocked: true },
@@ -35,10 +43,18 @@ export const ProfilePage: React.FC<ProfileProps> = ({ user }) => {
         <div className="absolute top-0 right-0 w-80 h-80 bg-brand-violet/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10 text-center sm:text-left">
-          {/* Avatar with Glow Frame */}
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-brand-purple shadow-glow-purple bg-surface-card flex items-center justify-center">
-              <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+          {/* Avatar with Glow Frame & Click-to-Edit Trigger */}
+          <div className="relative group cursor-pointer" onClick={() => setAvatarModalOpen(true)}>
+            <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-brand-purple shadow-glow-purple bg-surface-card flex items-center justify-center group-hover:border-purple-300 transition-all">
+              <img
+                src={user.avatarUrl || DEFAULT_AVATAR}
+                alt={user.username}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity rounded-2xl">
+                <Camera className="w-5 h-5 mb-0.5" />
+                <span className="text-[10px] font-bold font-mono">Change</span>
+              </div>
             </div>
             <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-brand-gold text-black font-extrabold text-xs flex items-center justify-center shadow-md">
               {user.level}
@@ -51,6 +67,11 @@ export const ProfilePage: React.FC<ProfileProps> = ({ user }) => {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
                 {user.username}
               </h1>
+              {user.isAdmin && (
+                <Badge variant="gold" className="animate-pulse bg-red-950/80 border-red-500/60 text-red-300">
+                  👑 GOD OVERLORD ADMIN
+                </Badge>
+              )}
               <Badge variant="purple">Level {user.level} Trainer</Badge>
               <Badge variant="gold">Phase 2 Ready</Badge>
             </div>
@@ -75,15 +96,23 @@ export const ProfilePage: React.FC<ProfileProps> = ({ user }) => {
 
           <div className="flex sm:flex-col gap-2 shrink-0">
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
-              onClick={() => showToast('Profile settings saved!', 'success')}
+              onClick={() => setAvatarModalOpen(true)}
+              leftIcon={<Camera className="w-4 h-4" />}
             >
-              Edit Profile
+              Change Avatar
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        isOpen={avatarModalOpen}
+        onClose={() => setAvatarModalOpen(false)}
+        onAvatarUpdated={handleAvatarUpdated}
+      />
 
       {/* Balances & Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

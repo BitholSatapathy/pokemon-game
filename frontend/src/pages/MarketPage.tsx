@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Store,
-  Search,
   PlusCircle,
   ShoppingCart,
   User,
@@ -20,6 +19,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Tabs, TabItem } from '../components/ui/Tabs';
+import { SearchAutocomplete } from '../components/common/SearchAutocomplete';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { UserProfile } from '../types';
@@ -392,13 +392,14 @@ export const MarketPage: React.FC<MarketProps> = ({ user, setUser }) => {
           <div className="glass-panel p-4 rounded-xl border border-surface-border flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search Input */}
             <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
+              <SearchAutocomplete
                 placeholder="Search listings by card name..."
+                category="cards"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-surface-light border border-surface-border rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-brand-purple placeholder:text-gray-500"
+                autoNavigate={false}
+                onChange={(val) => setSearchQuery(val)}
+                onSelect={(item) => setSearchQuery(item.title)}
+                className="w-full text-xs sm:text-sm"
               />
             </div>
 
@@ -767,13 +768,14 @@ export const MarketPage: React.FC<MarketProps> = ({ user, setUser }) => {
 
               {/* Card Search */}
               <div className="relative">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
+                <SearchAutocomplete
                   placeholder="Search your collection..."
+                  category="cards"
                   value={cardSearch}
-                  onChange={(e) => setCardSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-surface-light border border-surface-border rounded-xl text-xs text-white focus:outline-none focus:border-brand-purple"
+                  autoNavigate={false}
+                  onChange={(val) => setCardSearch(val)}
+                  onSelect={(item) => setCardSearch(item.title)}
+                  className="w-full text-xs"
                 />
               </div>
 

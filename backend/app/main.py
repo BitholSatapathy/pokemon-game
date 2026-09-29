@@ -135,6 +135,8 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         ensure_default_missions(db)
+        from app.services.card_expander import expand_cards_and_packs
+        expand_cards_and_packs(db)
     finally:
         db.close()
     yield

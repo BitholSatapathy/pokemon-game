@@ -2094,3 +2094,129 @@ export const fetchActiveAnnouncements = async (): Promise<SystemAnnouncement[]> 
   return res.json();
 };
 
+export interface SearchSuggestion {
+  id: string;
+  title: string;
+  subtitle: string;
+  image_url?: string;
+  category: 'card' | 'pack' | 'user' | 'deck';
+  link_to: string;
+  rarity?: string;
+  badge_color?: string;
+}
+
+export const fetchSearchSuggestions = async (
+  query: string,
+  category: string = 'all',
+  token?: string
+): Promise<SearchSuggestion[]> => {
+  if (!query || query.trim().length === 0) return [];
+  try {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(
+      `${API_BASE}/search/suggestions?q=${encodeURIComponent(query.trim())}&category=${category}`,
+      { headers }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.warn('Search suggestions error:', err);
+    return [];
+  }
+};
+
+export interface MysteryShopItem {
+  id: string;
+  item_type: 'card' | 'pack';
+  reference_id: string;
+  name: string;
+  subtitle: string;
+  image_url: string;
+  rarity: string;
+  types: string;
+  hp?: number;
+  original_price: number;
+  discount_percent: number;
+  price_coins: number;
+  currency: string;
+  max_quantity: number;
+  quantity_remaining: number;
+  is_sold_out: boolean;
+}
+
+export interface MysteryShopResponse {
+  items: MysteryShopItem[];
+  seconds_remaining: number;
+  block_id: number;
+  reroll_interval_hours: number;
+}
+
+export const fetchMysteryShop = async (token: string): Promise<MysteryShopResponse> => {
+  const res = await fetch(`${API_BASE}/mystery-shop/current`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error('Failed to load rotating black market');
+  }
+  return res.json();
+};
+
+export const buyMysteryShopItem = async (
+  itemId: string,
+  quantity: number,
+  token: string
+): Promise<{ success: boolean; message: string; new_coins: number; item_id: string; quantity_remaining: number; is_sold_out: boolean }> => {
+  const res = await fetch(`${API_BASE}/mystery-shop/buy`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ item_id: itemId, quantity }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to complete mystery purchase');
+  }
+  return res.json();
+};
+
+export const updateUserAvatar = async (
+  avatarUrl: string,
+  token: string
+): Promise<any> => {
+  const res = await fetch(`${API_BASE}/auth/avatar`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ avatar_url: avatarUrl }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update avatar icon');
+  }
+  return res.json();
+};
+
+export const triggerAdminAbuse = async (
+  action: 'coin-rain' | 'gem-eruption' | 'godmode-self' | 'shiny-surge' | 'force-shop-reroll' | 'mass-pack-drop',
+  token: string
+): Promise<any> => {
+  const res = await fetch(`${API_BASE}/admin/abuse/${action}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Admin abuse action ${action} failed`);
+  }
+  return res.json();
+};
+
+

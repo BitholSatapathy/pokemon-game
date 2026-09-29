@@ -16,6 +16,7 @@ from app.models.tournament import (
     BattlePassSeason, BattlePassReward, UserBattlePass
 )
 from app.models.admin import AuditLog, SystemAnnouncement, GameMasterSetting
+from app.models.mystery_shop import MysteryShopPurchase
 
 __all__ = [
     "User",
@@ -55,6 +56,7 @@ __all__ = [
     "AuditLog",
     "SystemAnnouncement",
     "GameMasterSetting",
+    "MysteryShopPurchase",
 ]
 
 

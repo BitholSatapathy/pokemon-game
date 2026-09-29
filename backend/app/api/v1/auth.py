@@ -98,3 +98,22 @@ def get_current_player(current_user: User = Depends(get_current_user)):
 def logout():
     """Client-side token acknowledgment."""
     return {"message": "Logged out successfully"}
+
+
+from pydantic import BaseModel
+
+class AvatarUpdateIn(BaseModel):
+    avatar_url: str
+
+@router.put("/avatar", response_model=UserResponse)
+def update_avatar(
+    payload: AvatarUpdateIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update authenticated player's profile avatar icon from curated choices."""
+    current_user.avatar_url = payload.avatar_url.strip()
+    db.commit()
+    db.refresh(current_user)
+    return UserResponse.model_validate(current_user)
+

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search,
   Crown,
   Coins,
   Gem,
@@ -11,9 +10,13 @@ import {
   LogIn,
   LogOut,
   User as UserIcon,
+  Sparkles,
+  ShieldAlert,
 } from 'lucide-react';
 import { HealthIndicator } from './HealthIndicator';
 import { AudioToggle } from '../common/AudioToggle';
+import { SearchAutocomplete } from '../common/SearchAutocomplete';
+import { AvatarPickerModal, DEFAULT_AVATAR } from '../common/AvatarPickerModal';
 import { UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -27,6 +30,7 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
   const { isAuthenticated, user: authUser, logout, openAuthModal } = useAuth();
   const { showToast } = useToast();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 
   // Active user is authUser if logged in, fallback to local/demo user
   const activeUser = authUser || user;
@@ -42,15 +46,18 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
     showToast('Claimed +50 Gems reward!', 'gold', 'Gems Added');
   };
 
+  const handleAvatarUpdated = (newUrl: string) => {
+    setUser((prev) => ({ ...prev, avatarUrl: newUrl }));
+  };
+
   return (
     <header className="sticky top-0 z-30 w-full h-18 bg-[#0B0B14]/90 backdrop-blur-xl border-b border-[#201E38]/80 px-4 sm:px-8 flex items-center justify-between gap-4">
-      {/* Search Input Bar */}
+      {/* Search Input Bar with Instant Auto-Complete & Left Thumbnail Icons */}
       <div className="relative flex-1 max-w-md">
-        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder="Search cards, sets, or players..."
-          className="w-full pl-10 pr-4 py-2 bg-[#141424] border border-[#2A2A44] rounded-xl text-xs sm:text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition-all"
+        <SearchAutocomplete
+          placeholder="Search cards, sets, packs, trainers..."
+          category="all"
+          autoNavigate={true}
         />
       </div>
 
@@ -61,12 +68,18 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
           <div className="relative">
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center gap-3 p-1.5 pr-3 rounded-2xl hover:bg-[#161628] border border-transparent hover:border-[#2A2A44] transition-all group cursor-pointer"
+              className={`flex items-center gap-3 p-1.5 pr-3 rounded-2xl hover:bg-[#161628] border transition-all group cursor-pointer ${
+                activeUser.isAdmin
+                  ? 'border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.25)] bg-amber-500/5'
+                  : 'border-transparent hover:border-[#2A2A44]'
+              }`}
             >
               <div className="relative">
-                <div className="w-9 h-9 rounded-xl overflow-hidden border border-brand-purple shadow-glow-purple bg-surface-card">
+                <div className={`w-9 h-9 rounded-xl overflow-hidden bg-surface-card flex items-center justify-center border ${
+                  activeUser.isAdmin ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-brand-purple shadow-glow-purple'
+                }`}>
                   <img
-                    src={activeUser.avatarUrl}
+                    src={activeUser.avatarUrl || DEFAULT_AVATAR}
                     alt={activeUser.username}
                     className="w-full h-full object-cover"
                   />
@@ -81,7 +94,13 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
                   <span className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
                     {activeUser.username}
                   </span>
-                  <span className="text-[10px] text-gray-400 font-mono">Level {activeUser.level}</span>
+                  {activeUser.isAdmin ? (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold uppercase bg-gradient-to-r from-red-600 to-amber-500 text-white animate-pulse shadow-sm">
+                      GOD ADMIN
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-gray-400 font-mono">Level {activeUser.level}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <div className="w-20 bg-[#252538] rounded-full h-1.5 overflow-hidden">
@@ -99,13 +118,23 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
 
             {/* Profile Dropdown */}
             {userDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-[#121222] border border-[#2A2A44] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+              <div className="absolute right-0 mt-2 w-56 bg-[#121222] border border-[#2A2A44] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
                 <div className="px-3 py-2 border-b border-[#25253E] mb-1">
                   <span className="text-xs font-bold text-white block">{activeUser.username}</span>
                   <span className="text-[10px] text-gray-400 font-mono truncate block">
                     {activeUser.email}
                   </span>
                 </div>
+                <button
+                  onClick={() => {
+                    setUserDropdownOpen(false);
+                    setAvatarModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-purple-300 hover:text-white hover:bg-surface-light rounded-xl transition-colors text-left cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span>Choose Profile Avatar</span>
+                </button>
                 <Link
                   to="/profile"
                   onClick={() => setUserDropdownOpen(false)}
@@ -114,6 +143,16 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
                   <UserIcon className="w-4 h-4 text-brand-purple" />
                   <span>Trainer Profile</span>
                 </Link>
+                {activeUser.isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-xl transition-colors"
+                  >
+                    <ShieldAlert className="w-4 h-4 text-red-400" />
+                    <span>Admin Command Center</span>
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setUserDropdownOpen(false);
@@ -200,6 +239,13 @@ export const TopBar: React.FC<TopBarProps> = ({ user, setUser }) => {
           <Settings className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        isOpen={avatarModalOpen}
+        onClose={() => setAvatarModalOpen(false)}
+        onAvatarUpdated={handleAvatarUpdated}
+      />
     </header>
   );
 };

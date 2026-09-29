@@ -7,13 +7,13 @@ import {
   acceptTradeOffer,
   declineTradeOffer,
   cancelTradeOffer,
-  searchPlayers,
   fetchMyCollection,
   TradeOfferOut,
   TradeItemIn,
   PlayerSearchResult,
   ApiUserCard,
 } from '../services/api';
+import { SearchAutocomplete } from '../components/common/SearchAutocomplete';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -193,7 +193,6 @@ type WizardStep = 'target' | 'offer' | 'request' | 'review';
 function CreateTradeWizard({ token, onCreated }: CreateTradeWizardProps) {
   const [step, setStep] = useState<WizardStep>('target');
   const [playerQuery, setPlayerQuery] = useState('');
-  const [playerResults, setPlayerResults] = useState<PlayerSearchResult[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerSearchResult | null>(null);
   const [message, setMessage] = useState('');
   const [myCards, setMyCards] = useState<ApiUserCard[]>([]);
@@ -208,15 +207,6 @@ function CreateTradeWizard({ token, onCreated }: CreateTradeWizardProps) {
       fetchMyCollection(token).then((data) => setMyCards(data?.items || [])).catch(() => {});
     }
   }, [step, token, myCards.length]);
-
-  // Player search debounce
-  useEffect(() => {
-    if (playerQuery.length < 2) { setPlayerResults([]); return; }
-    const timer = setTimeout(() => {
-      searchPlayers(token, playerQuery).then(setPlayerResults).catch(() => {});
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [playerQuery, token]);
 
   const toggleOfferItem = (card: ApiUserCard) => {
     const existing = offerItems.find((i) => i.user_card_id === card.id);
@@ -279,26 +269,19 @@ function CreateTradeWizard({ token, onCreated }: CreateTradeWizardProps) {
       {step === 'target' && (
         <div className="space-y-4">
           <h3 className="text-white font-semibold">Who do you want to trade with?</h3>
-          <input
-            type="text"
+          <SearchAutocomplete
+            category="users"
             value={playerQuery}
-            onChange={(e) => setPlayerQuery(e.target.value)}
+            autoNavigate={false}
+            onChange={(val) => setPlayerQuery(val)}
+            onSelect={(item) => {
+              const numericId = parseInt(item.id.replace('user_', ''), 10) || 0;
+              setSelectedPlayer({ id: numericId, username: item.title });
+              setPlayerQuery('');
+            }}
             placeholder="Search by username…"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-purple-400"
+            className="w-full"
           />
-          {playerResults.length > 0 && (
-            <div className="space-y-2">
-              {playerResults.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => { setSelectedPlayer(p); setPlayerQuery(''); setPlayerResults([]); }}
-                  className="w-full text-left px-4 py-3 rounded-lg bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/40 transition-colors"
-                >
-                  <span className="text-white font-medium">@{p.username}</span>
-                </button>
-              ))}
-            </div>
-          )}
           {selectedPlayer && (
             <div className="flex items-center gap-3 px-4 py-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
               <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">

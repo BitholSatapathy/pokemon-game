@@ -481,6 +481,226 @@ def set_xp_multiplier(
     return {"message": f"Global XP Multiplier updated to {req.multiplier}x", "multiplier": req.multiplier}
 
 
+# ---------------------------------------------------------------------------
+# ADMIN ABUSE & CHAOS ENGINE (Phase 21 God Mode Controls)
+# ---------------------------------------------------------------------------
+
+@router.post("/abuse/coin-rain", response_model=dict)
+def abuse_coin_rain(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Admin Abuse: Grant +25,000 Coins to every player in the server."""
+    users = db.query(User).filter(User.is_banned == False).all()
+    rain_amount = 25000
+    for u in users:
+        u.coins += rain_amount
+        db.add(Transaction(
+            user_id=u.id,
+            type="ADMIN_ABUSE_REWARD",
+            amount=rain_amount,
+            currency="coins",
+            reference_id="coin_rain",
+            description=f"Server-wide Coin Rain triggered by Admin {admin.username}!"
+        ))
+
+    # Broadcast live alert
+    announcement = SystemAnnouncement(
+        title="🌧️ ADMIN ABUSE: Massive Coin Rain!",
+        message=f"Admin {admin.username} just made it rain! Every active trainer received +{rain_amount:,} Coins!",
+        banner_type="success",
+        is_active=True
+    )
+    db.add(announcement)
+
+    audit = AuditLog(
+        user_id=admin.id,
+        actor_username=admin.username,
+        action="ADMIN_ABUSE_COIN_RAIN",
+        severity="WARNING",
+        details=f"Admin {admin.username} triggered Coin Rain (+{rain_amount:,} Coins to {len(users)} users)",
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Admin Abuse triggered: Granted +{rain_amount:,} Coins to {len(users)} players!",
+        "affected_users": len(users)
+    }
+
+
+@router.post("/abuse/gem-eruption", response_model=dict)
+def abuse_gem_eruption(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Admin Abuse: Grant +250 Gems to every player in the server."""
+    users = db.query(User).filter(User.is_banned == False).all()
+    gem_amount = 250
+    for u in users:
+        u.gems += gem_amount
+        db.add(Transaction(
+            user_id=u.id,
+            type="ADMIN_ABUSE_REWARD",
+            amount=gem_amount,
+            currency="gems",
+            reference_id="gem_eruption",
+            description=f"Server-wide Gem Eruption triggered by Admin {admin.username}!"
+        ))
+
+    announcement = SystemAnnouncement(
+        title="💎 ADMIN ABUSE: Gem Volcano Eruption!",
+        message=f"A fountain of crystals erupted! Admin {admin.username} granted +{gem_amount} Gems to all trainers!",
+        banner_type="event",
+        is_active=True
+    )
+    db.add(announcement)
+
+    audit = AuditLog(
+        user_id=admin.id,
+        actor_username=admin.username,
+        action="ADMIN_ABUSE_GEM_ERUPTION",
+        severity="WARNING",
+        details=f"Admin {admin.username} triggered Gem Eruption (+{gem_amount} Gems to {len(users)} users)",
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Admin Abuse triggered: Granted +{gem_amount} Gems to {len(users)} players!",
+        "affected_users": len(users)
+    }
+
+
+@router.post("/abuse/godmode-self", response_model=dict)
+def abuse_godmode_self(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Admin Abuse: Self-grant 1,000,000 Coins, 50,000 Gems, and Level 100 God Status."""
+    admin.coins += 1000000
+    admin.gems += 50000
+    admin.level = 100
+    admin.xp += 100000
+
+    audit = AuditLog(
+        user_id=admin.id,
+        actor_username=admin.username,
+        action="ADMIN_GODMODE_SELF",
+        severity="CRITICAL",
+        details=f"Admin {admin.username} triggered Godmode self-buff: +1M Coins, +50k Gems, Lvl 100.",
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(admin)
+
+    return {
+        "success": True,
+        "message": f"👑 GODMODE ACTIVATED: Welcome to Divinity, {admin.username}!",
+        "coins": admin.coins,
+        "gems": admin.gems,
+        "level": admin.level
+    }
+
+
+@router.post("/abuse/shiny-surge", response_model=dict)
+def abuse_shiny_surge(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Admin Abuse: Toggle God-tier Ultra Rare & Secret Rare booster pull rate to 100%."""
+    setting = db.query(GameMasterSetting).filter(GameMasterSetting.key == "god_luck").first()
+    if not setting:
+        setting = GameMasterSetting(
+            key="god_luck",
+            value="1",
+            description="100% Holo and Secret Rare pull chance"
+        )
+        db.add(setting)
+        is_active = True
+    else:
+        is_active = (setting.value != "1")
+        setting.value = "1" if is_active else "0"
+
+    status_str = "ENABLED (100% Ultra Rare Rates)" if is_active else "DISABLED (Standard Rates)"
+
+    announcement = SystemAnnouncement(
+        title="🌟 ADMIN ABUSE: Cosmic Shiny Supernova Active!" if is_active else "🌌 Shiny Supernova Concluded",
+        message=f"Admin {admin.username} has overloaded pack pull rates! Secret Rares are surging!" if is_active else "Pack pull rates normalized.",
+        banner_type="warning" if is_active else "info",
+        is_active=True
+    )
+    db.add(announcement)
+    db.commit()
+
+    return {
+        "success": True,
+        "is_active": is_active,
+        "message": f"Shiny Surge {status_str}"
+    }
+
+
+@router.post("/abuse/force-shop-reroll", response_model=dict)
+def abuse_force_shop_reroll(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Admin Abuse: Immediately force reroll the 4-hour mystery black market stock for all players."""
+    from app.services.mystery_shop_service import force_reroll_all_mystery_shops
+    new_epoch = force_reroll_all_mystery_shops(db)
+
+    announcement = SystemAnnouncement(
+        title="🔄 BLACK MARKET REROLLED!",
+        message="A mysterious broker has arrived! The 4-Hour Mystery Black Market stock has refreshed with new cards and packs!",
+        banner_type="event",
+        is_active=True
+    )
+    db.add(announcement)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": "Mystery Black Market successfully force rerolled for all players!",
+        "new_epoch": new_epoch
+    }
+
+
+@router.post("/abuse/mass-pack-drop", response_model=dict)
+def abuse_mass_pack_drop(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """Admin Abuse: Grant 3x Celestial Horizons Apex Packs to all players."""
+    users = db.query(User).filter(User.is_banned == False).all()
+    pack_id = "pack_celestial_apex"
+    qty = 3
+
+    for u in users:
+        pp = db.query(PlayerPack).filter(PlayerPack.user_id == u.id, PlayerPack.pack_id == pack_id).first()
+        if pp:
+            pp.quantity += qty
+        else:
+            db.add(PlayerPack(user_id=u.id, pack_id=pack_id, quantity=qty))
+
+    announcement = SystemAnnouncement(
+        title="🎁 ADMIN ABUSE: Air Drop Incoming!",
+        message=f"Admin {admin.username} parachuted 3x Celestial Horizons Apex Packs to all players!",
+        banner_type="success",
+        is_active=True
+    )
+    db.add(announcement)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Air-dropped 3x Celestial Horizons Apex Packs to {len(users)} players!",
+        "affected_users": len(users)
+    }
+
+
+
 @public_announcements_router.get("/active", response_model=List[SystemAnnouncementOut])
 def get_active_announcements(db: Session = Depends(get_db)):
     """Public endpoint to fetch active announcements for client alert banners."""

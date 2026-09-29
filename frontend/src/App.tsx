@@ -24,6 +24,8 @@ import { ShopFrontPage } from './pages/ShopFrontPage';
 import GradingPage from './pages/GradingPage';
 import DecksPage from './pages/DecksPage';
 import BattlePage from './pages/BattlePage';
+import { TournamentsPage } from './pages/TournamentsPage';
+import { BattlePassPage } from './pages/BattlePassPage';
 import { INITIAL_USER } from './data/mockData';
 import { UserProfile } from './types';
 
@@ -81,6 +83,8 @@ const MainLayout: React.FC = () => {
             <Route path="/grading" element={<GradingPage />} />
             <Route path="/decks" element={<DecksPage />} />
             <Route path="/battle" element={<BattlePage />} />
+            <Route path="/tournaments" element={<TournamentsPage />} />
+            <Route path="/battle-pass" element={<BattlePassPage />} />
             <Route path="/profile" element={<ProfilePage user={activeUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

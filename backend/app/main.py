@@ -14,7 +14,9 @@ from app.models import (
     CosmeticItem, UserCosmetic, UserEquippedCosmetics,
     PlayerShop, PlayerShopItem, ShopUpvote,
     GradedCard,
-    Deck, DeckCard, BattleHistory
+    Deck, DeckCard, BattleHistory,
+    Tournament, TournamentParticipant, TournamentMatch,
+    BattlePassSeason, BattlePassReward, UserBattlePass
 )
 from app.services.missions_service import ensure_default_missions
 

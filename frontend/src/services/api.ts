@@ -1678,3 +1678,199 @@ export const fetchBattleHistory = async (token: string): Promise<BattleHistoryIt
   if (!res.ok) throw new Error('Failed to fetch battle history');
   return res.json();
 };
+
+// ===========================================================================
+// PHASE 18: TOURNAMENTS & BATTLE PASS APIS
+// ===========================================================================
+
+export interface ApiTournamentParticipant {
+  id: number;
+  user_id?: number | null;
+  display_name: string;
+  avatar_url?: string | null;
+  seed: number;
+  is_ai: boolean;
+  active_deck_name: string;
+  deck_archetype: string;
+  eliminated: boolean;
+  eliminated_in_round?: number | null;
+}
+
+export interface ApiTournamentMatch {
+  id: number;
+  round_number: number;
+  match_index: number;
+  participant1?: ApiTournamentParticipant | null;
+  participant2?: ApiTournamentParticipant | null;
+  winner?: ApiTournamentParticipant | null;
+  p1_score: number;
+  p2_score: number;
+  status: string;
+  completed_at?: string | null;
+  battle_log?: string[];
+}
+
+export interface ApiTournament {
+  id: string;
+  name: string;
+  description?: string;
+  tier: string;
+  entry_fee_coins: number;
+  reward_coins: number;
+  reward_gems: number;
+  reward_pack_id?: string;
+  banner_url?: string;
+  status: string;
+  rounds_total: number;
+  current_round: number;
+  winner_name?: string | null;
+  user_participant_id?: number | null;
+  user_status?: string | null;
+  participants?: ApiTournamentParticipant[];
+  matches?: ApiTournamentMatch[];
+}
+
+export interface ApiTournamentMatchResult {
+  match_id: number;
+  round_number: number;
+  won: boolean;
+  is_tournament_over: boolean;
+  is_champion: boolean;
+  coins_awarded: number;
+  gems_awarded: number;
+  xp_awarded: number;
+  pack_awarded?: string | null;
+  battle_log: string[];
+  next_match_id?: number | null;
+}
+
+export interface ApiBattlePassReward {
+  id: number;
+  tier: number;
+  is_premium: boolean;
+  reward_type: string;
+  reward_amount: number;
+  reference_id?: string | null;
+  title: string;
+  icon_url?: string | null;
+  is_claimed: boolean;
+}
+
+export interface ApiBattlePassSeason {
+  id: number;
+  season_number: number;
+  title: string;
+  theme: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  total_tiers: number;
+  xp_per_tier: number;
+  premium_price_gems: number;
+  user_tier: number;
+  user_xp: number;
+  xp_in_current_tier: number;
+  has_premium: boolean;
+  free_rewards: ApiBattlePassReward[];
+  premium_rewards: ApiBattlePassReward[];
+}
+
+export interface ApiBattlePassClaimResult {
+  tier: number;
+  is_premium: boolean;
+  reward_title: string;
+  reward_type: string;
+  reward_amount: number;
+  coins_balance: number;
+  gems_balance: number;
+  message: string;
+}
+
+export const fetchTournaments = async (token: string): Promise<ApiTournament[]> => {
+  const res = await fetch(`${API_BASE}/tournaments`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch tournaments');
+  return res.json();
+};
+
+export const fetchTournamentDetail = async (tournamentId: string, token: string): Promise<ApiTournament> => {
+  const res = await fetch(`${API_BASE}/tournaments/${tournamentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch tournament details');
+  return res.json();
+};
+
+export const joinTournament = async (tournamentId: string, deckId: number | undefined, token: string): Promise<ApiTournament> => {
+  const res = await fetch(`${API_BASE}/tournaments/${tournamentId}/join`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ deck_id: deckId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to join tournament');
+  }
+  return res.json();
+};
+
+export const playTournamentMatch = async (tournamentId: string, token: string): Promise<ApiTournamentMatchResult> => {
+  const res = await fetch(`${API_BASE}/tournaments/${tournamentId}/play`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ action: 'attack' }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to play tournament match');
+  }
+  return res.json();
+};
+
+export const spectateTournamentMatch = async (matchId: number, token: string): Promise<ApiTournamentMatch> => {
+  const res = await fetch(`${API_BASE}/tournaments/matches/${matchId}/spectate`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to spectate match');
+  return res.json();
+};
+
+export const fetchCurrentBattlePass = async (token: string): Promise<ApiBattlePassSeason> => {
+  const res = await fetch(`${API_BASE}/battle-pass/current`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch battle pass');
+  return res.json();
+};
+
+export const unlockPremiumBattlePass = async (token: string): Promise<ApiBattlePassSeason> => {
+  const res = await fetch(`${API_BASE}/battle-pass/unlock-premium`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to unlock premium battle pass');
+  }
+  return res.json();
+};
+
+export const claimBattlePassReward = async (tier: number, isPremium: boolean, token: string): Promise<ApiBattlePassClaimResult> => {
+  const res = await fetch(`${API_BASE}/battle-pass/claim/${tier}?is_premium=${isPremium}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to claim reward');
+  }
+  return res.json();
+};

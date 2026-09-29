@@ -11,6 +11,10 @@ from app.models.cosmetic import CosmeticItem, UserCosmetic, UserEquippedCosmetic
 from app.models.player_shop import PlayerShop, PlayerShopItem, ShopUpvote
 from app.models.grading import GradedCard
 from app.models.battle import Deck, DeckCard, BattleHistory
+from app.models.tournament import (
+    Tournament, TournamentParticipant, TournamentMatch,
+    BattlePassSeason, BattlePassReward, UserBattlePass
+)
 
 __all__ = [
     "User",
@@ -41,6 +45,12 @@ __all__ = [
     "Deck",
     "DeckCard",
     "BattleHistory",
+    "Tournament",
+    "TournamentParticipant",
+    "TournamentMatch",
+    "BattlePassSeason",
+    "BattlePassReward",
+    "UserBattlePass",
 ]
 
 

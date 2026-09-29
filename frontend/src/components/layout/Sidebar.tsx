@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Layers,
   Swords,
+  Crown,
   X,
   Menu,
 } from 'lucide-react';
@@ -37,6 +38,8 @@ export const Sidebar: React.FC = () => {
     { to: '/market', label: 'Market', icon: <Store className="w-4 h-4" /> },
     { to: '/missions', label: 'Missions', icon: <Target className="w-4 h-4" /> },
     { to: '/events', label: 'Events & Daily', icon: <Flame className="w-4 h-4 text-amber-400" /> },
+    { to: '/tournaments', label: 'Tournaments', icon: <Trophy className="w-4 h-4 text-amber-400" /> },
+    { to: '/battle-pass', label: 'Battle Pass', icon: <Crown className="w-4 h-4 text-amber-300" /> },
     { to: '/trading', label: 'Trading', icon: <ArrowLeftRight className="w-4 h-4 text-cyan-400" /> },
     { to: '/shops', label: 'Player Shops', icon: <Building2 className="w-4 h-4 text-emerald-400" /> },
     { to: '/grading', label: 'Grading (NGS)', icon: <ShieldCheck className="w-4 h-4 text-emerald-400" /> },
